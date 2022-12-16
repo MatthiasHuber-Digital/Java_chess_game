@@ -1,10 +1,12 @@
 package com.chess.squares;
 import com.chess.common.*;
+import com.chess.piece.*;
 
 public class Square {
     private final SquareColor squareColor;
     private final Location location;
     private boolean isOccupied;
+    private AbstractPiece currentPiece;
 
     public Square (SquareColor squareColor, Location location){
         this.squareColor = squareColor;
@@ -12,8 +14,17 @@ public class Square {
         this.isOccupied = false;
     }
 
+    public AbstractPiece getCurrentPiece(){
+        return currentPiece;
+    }
+
+    public void setCurrentPiece(AbstractPiece currentPiece){
+        this.currentPiece = currentPiece;
+    }
+
     public void reset(){
         this.isOccupied = false;
+        this.currentPiece = null;
     }
 
 

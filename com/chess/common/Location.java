@@ -34,4 +34,12 @@ public class Location {
     public int hashCode() {
         return Objects.hash(file, rank);
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+            " file='" + getFile() + "'" +
+            ", rank='" + getRank() + "'" +
+            "}";
+    }
 }
