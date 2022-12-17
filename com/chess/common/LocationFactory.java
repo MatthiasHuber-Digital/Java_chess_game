@@ -1,5 +1,6 @@
 package com.chess.common;
 
+// The location factory gives back the updated location and can work with file offset integer values
 public class LocationFactory {
     private static final File[] files = File.values(); // convert enum to an array of values but in datatype File (will not work to use usual int for Location)
     // THIS IS INTERESTING: the location is being BUILT together

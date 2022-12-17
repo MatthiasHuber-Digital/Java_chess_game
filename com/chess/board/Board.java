@@ -1,23 +1,46 @@
 package com.chess.board;
 import com.chess.squares.*;
 import com.chess.common.*;
+import com.chess.piece.AbstractPiece;
+import com.chess.piece.PieceFactory;
+
 import java.util.*;
 
 public class Board {
     private static final int BOARD_LENGTH = 8;
+    // Location contains the coordinates
+    // Square contains the info if is occupied or not
     private final Map<Location, Square> locationSquareMap;
+    // boardSquares is for assigning colors to each square for later graphical dispay:
     Square[][] boardSquares = new Square[8][8];
 
     public Board(){
+        // map zipping together the squares and location coordinates
         locationSquareMap = new HashMap<>();
+        
+        // Mapping of pieces to their locations:
+        Map<Location, AbstractPiece> pieces = PieceFactory.getPieces();
+
+
         for (int i=0; i < boardSquares.length; i++){
             int column = 0;
             SquareColor currentColor = (i%2 == 0) ? SquareColor.LIGHT : SquareColor.DARK;
 
             for(File file : File.values()){
+                // generate the square object
                 Square newSquare = new Square(currentColor, new Location(file, BOARD_LENGTH - i));
-                locationSquareMap.put(newSquare.getLocation(), newSquare);
+                // if there is a piece that has a link to the square's location - 
+                if (pieces.containsKey(newSquare.getLocation())){
+                    // Creating a reference to the piece of the current location
+                    AbstractPiece piece = pieces.get(newSquare.getLocation());
+                    // Assign the piece to the square
+                    newSquare.setCurrentPiece(piece);
+                    newSquare.setIsOccupied(true);
+                    // The piece also needs to contain information where it is:
+                    piece.setCurrentSquare(newSquare);
+                }
                 boardSquares[i][column] = newSquare;
+                locationSquareMap.put(newSquare.getLocation(), newSquare);
                 currentColor = (currentColor == SquareColor.LIGHT) ? SquareColor.DARK : SquareColor.LIGHT;
                 column++;
             }
@@ -28,14 +51,31 @@ public class Board {
         return locationSquareMap;
     }
 
+    // Printing a simple version of the board using characters and without colors:
     public void printBoard(){
-        int i = 0;
-        for(Square[] row : boardSquares){
-            for(Square square : row){
-                i++;
-                System.out.println("Node #:" + i + ", " + square);
+        System.out.print("  ");
+        for(File file : File.values()){
+            System.out.print(file.name() + " "); // file letters, top
+        } 
+        System.out.println();
+        for(int i = 0; i < boardSquares.length; i++){
+            System.out.print(BOARD_LENGTH - i + " "); // row numbers, left side
+            for(int j = 0; j < boardSquares[i].length; j++){
+                if (boardSquares[i][j].getIsOccupied()){
+                    AbstractPiece piece = boardSquares[i][j].getCurrentPiece();
+                    System.out.print(piece.getName().charAt(0) + " ");
+                } else {
+                    // empty square printing:
+                    System.out.print("- ");
+                }
             }
-            System.out.println('\n');
+            System.out.print(BOARD_LENGTH - i); // row numbers, right side
+            System.out.println();
         }
+        System.out.print("  ");
+        for(File file : File.values()){
+            System.out.print(file.name() + " "); // file letters bottom
+        } 
+        System.out.println();
     }
 }
