@@ -2,6 +2,7 @@ package com.chess.board;
 import com.chess.squares.*;
 import com.chess.common.*;
 import com.chess.piece.AbstractPiece;
+import com.chess.piece.PieceColor;
 import com.chess.piece.PieceFactory;
 
 import java.util.*;
@@ -11,8 +12,14 @@ public class Board {
     // Location contains the coordinates
     // Square contains the info if is occupied or not
     private final Map<Location, Square> locationSquareMap;
+
     // boardSquares is for assigning colors to each square for later graphical dispay:
     Square[][] boardSquares = new Square[8][8];
+
+    // separate pieces lists
+    private final List<AbstractPiece> lightPieces = new ArrayList<>();
+    private final List<AbstractPiece> darkPieces = new ArrayList<>();
+
 
     public Board(){
         // map zipping together the squares and location coordinates
@@ -38,6 +45,11 @@ public class Board {
                     newSquare.setIsOccupied(true);
                     // The piece also needs to contain information where it is:
                     piece.setCurrentSquare(newSquare);
+                    if (piece.getPieceColor().equals(PieceColor.DARK)){
+                        darkPieces.add(piece);
+                    } else {
+                        lightPieces.add(piece);
+                    }
                 }
                 boardSquares[i][column] = newSquare;
                 locationSquareMap.put(newSquare.getLocation(), newSquare);
@@ -49,6 +61,14 @@ public class Board {
 
     public Map<Location, Square> getLocationSquareMap(){
         return locationSquareMap;
+    }
+
+    // helper methods
+    public List<AbstractPiece> getLightPieces(){
+        return lightPieces;
+    }
+    public List<AbstractPiece> getDarkPieces(){
+        return darkPieces;
     }
 
     // Printing a simple version of the board using characters and without colors:
@@ -63,7 +83,12 @@ public class Board {
             for(int j = 0; j < boardSquares[i].length; j++){
                 if (boardSquares[i][j].getIsOccupied()){
                     AbstractPiece piece = boardSquares[i][j].getCurrentPiece();
-                    System.out.print(piece.getName().charAt(0) + " ");
+                    if (piece.getPieceColor().equals(PieceColor.LIGHT)){
+                        System.out.print(Character.toLowerCase(piece.getName().charAt(0)) + " ");
+                    }
+                    else{
+                        System.out.print(piece.getName().charAt(0) + " ");
+                    }
                 } else {
                     // empty square printing:
                     System.out.print("- ");

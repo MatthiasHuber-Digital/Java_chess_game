@@ -1,7 +1,7 @@
 package com.chess.piece;
 import com.chess.squares.*;
 
-public abstract class AbstractPiece {
+public abstract class AbstractPiece implements Movable{
     protected String name;
     protected PieceColor pieceColor;
     protected Square currentSquare;
@@ -11,15 +11,15 @@ public abstract class AbstractPiece {
     }
 
     public PieceColor getPieceColor(){
-        return this.pieceColor;
+        return pieceColor;
     }
 
     public String getName(){
-        return this.name;
+        return name;
     }
 
     public Square getCurrentSquare(){
-        return this.currentSquare;
+        return currentSquare;
     }
 
     public void setCurrentSquare(Square currentSquare){
@@ -34,4 +34,5 @@ public abstract class AbstractPiece {
             ", currentSquare='" + getCurrentSquare() + "'" +
             "}";
     }
+
 }

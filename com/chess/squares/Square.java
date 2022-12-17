@@ -15,7 +15,7 @@ public class Square {
     }
 
     public AbstractPiece getCurrentPiece(){
-        return currentPiece;
+        return this.currentPiece;
     }
 
     public void setCurrentPiece(AbstractPiece currentPiece){
@@ -29,20 +29,20 @@ public class Square {
 
 
     public SquareColor getSquareColor() {
-        return this.squareColor;
+        return squareColor;
     }
 
 
     public Location getLocation() {
-        return this.location;
+        return location;
     }
 
     public boolean getIsOccupied() {
-        return this.isOccupied;
+        return isOccupied;
     }
 
-    public void setIsOccupied(boolean isOccupied) {
-        this.isOccupied = isOccupied;
+    public void setIsOccupied(boolean occupied) {
+        isOccupied = occupied;
     }
     
 

@@ -4,7 +4,7 @@ import com.chess.squares.*;
 import com.chess.board.*;
 import com.chess.common.*;
 
-public class Rook extends AbstractPiece implements Movable, MovableSquare{
+public class Rook extends AbstractPiece{
     
     public Rook(PieceColor pieceColor){
         super(pieceColor);
@@ -15,12 +15,6 @@ public class Rook extends AbstractPiece implements Movable, MovableSquare{
     public List<Location> getValidMoves(Board board){
         Map<Location, Square> squareMap = board.getLocationSquareMap();
         return getSquareDependentMoveCandidates(this.getCurrentSquare(), squareMap);
-    }
-
-    @Override
-    public List<Location> getValidMoves(Board board, Square square){
-        Map<Location, Square> squareMap = board.getLocationSquareMap();
-        return getSquareDependentMoveCandidates(square, squareMap);
     }
 
     private List<Location> getSquareDependentMoveCandidates(
@@ -65,6 +59,8 @@ public class Rook extends AbstractPiece implements Movable, MovableSquare{
 
     @Override
     public void makeMove(Square square){
-        System.out.println(this.getName() + "-> makeMove()");
+        Square current = this.getCurrentSquare();
+        this.setCurrentSquare(square);
+        current.reset();
     };
 }
