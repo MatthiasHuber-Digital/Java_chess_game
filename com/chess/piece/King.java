@@ -5,7 +5,7 @@ import com.chess.squares.*;
 import com.chess.board.*;
 import com.chess.common.*;
 
-public class King extends AbstractPiece implements Movable{
+public class King extends AbstractPiece{
     
     public King(PieceColor pieceColor){
         super(pieceColor);
@@ -46,6 +46,8 @@ public class King extends AbstractPiece implements Movable{
 
     @Override
     public void makeMove(Square square){
-        System.out.println(this.getName() + "-> makeMove()");
+        Square current = this.getCurrentSquare();
+        this.setCurrentSquare(square);
+        current.reset();
     };
 }

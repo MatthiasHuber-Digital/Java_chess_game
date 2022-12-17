@@ -5,25 +5,33 @@ import com.chess.squares.*;
 import com.chess.board.*;
 import com.chess.common.*;
 
-public class Pawn extends AbstractPiece implements Movable{
+public class Pawn extends AbstractPiece{
     private boolean isFirstMove = true;
+    private int rankDirectionMultiplier;
 
     public Pawn(PieceColor pieceColor){
         super(pieceColor);
         this.name = "Pawn";
+        if (this.pieceColor.equals(PieceColor.LIGHT)){
+            rankDirectionMultiplier = -1;
+        }
+        else{
+            rankDirectionMultiplier = 1;
+        }
     }
 
     @Override
     public List<Location> getValidMoves(Board board){
         List<Location> moveCandidates = Collections.emptyList();
         Location currentLocation = this.getCurrentSquare().getLocation();
-        moveCandidates.add(LocationFactory.buildLocation(currentLocation, 0, 1));
+        moveCandidates.add(LocationFactory.buildLocation(currentLocation, 0, 1 * rankDirectionMultiplier));
         if (isFirstMove){
-            moveCandidates.add(LocationFactory.buildLocation(currentLocation, 0, 2));
-                return moveCandidates;
+            moveCandidates.add(LocationFactory.buildLocation(currentLocation, 0, 2 * rankDirectionMultiplier));
+            isFirstMove = false;
+            return moveCandidates;
         }
-        moveCandidates.add(LocationFactory.buildLocation(currentLocation, 1, 1));
-        moveCandidates.add(LocationFactory.buildLocation(currentLocation, -1, 1));
+        moveCandidates.add(LocationFactory.buildLocation(currentLocation, 1, 1 * rankDirectionMultiplier));
+        moveCandidates.add(LocationFactory.buildLocation(currentLocation, -1, 1 * rankDirectionMultiplier));
         
         // approach without lambda function by introducing local map:
         Map<Location, Square> squareMap = board.getLocationSquareMap();
@@ -56,8 +64,11 @@ public class Pawn extends AbstractPiece implements Movable{
     }
 
     @Override
-    public void makeMove(Square square){
-        System.out.println(this.getName() + "-> makeMove()");
+    public void makeMove(Square targetSquare){
+        Square currentSquare = this.getCurrentSquare();
+        this.setCurrentSquare(targetSquare);
+        targetSquare.setCurrentPiece(currentSquare.getCurrentPiece());
+        currentSquare.reset();
     };
 
 }
