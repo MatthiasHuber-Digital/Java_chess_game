@@ -4,7 +4,6 @@ import com.chess.common.Location;
 import com.chess.board.*;
 import com.chess.squares.*;
 
-public interface Movable {
-    List<Location> getValidMoves(Board board);
-    void makeMove(Square square);
+public interface MovableSquare {
+    List<Location> getValidMoves(Board board, Square square);
 }

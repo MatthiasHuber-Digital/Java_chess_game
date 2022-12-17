@@ -1,7 +1,6 @@
 package com.chess.piece;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import com.chess.squares.*;
 import com.chess.board.*;
 import com.chess.common.*;

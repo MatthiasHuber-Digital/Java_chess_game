@@ -6,8 +6,8 @@ import com.chess.common.*;
 
 public class Queen extends AbstractPiece implements Movable{
     // the sense of these attributes is to combine the moves of a bishop and a rook:
-    private Movable bishop;
-    private Movable rook;
+    private MovableSquare bishop;
+    private MovableSquare rook;
 
     // initial constructor:
     public Queen(PieceColor pieceColor){
@@ -16,7 +16,7 @@ public class Queen extends AbstractPiece implements Movable{
     }
 
     // later constructor:
-    public Queen(PieceColor pieceColor, Movable bishop, Movable rook){
+    public Queen(PieceColor pieceColor, MovableSquare bishop, MovableSquare rook){
         super(pieceColor);
         this.bishop = bishop;
         this.rook = rook;
@@ -30,12 +30,6 @@ public class Queen extends AbstractPiece implements Movable{
         moveCandidates.addAll(bishop.getValidMoves(board, this.getCurrentSquare()));
         moveCandidates.addAll(rook.getValidMoves(board, this.getCurrentSquare()));
         return moveCandidates;
-    }
-
-    
-    @Override
-    public List<Location> getValidMoves(Board board, Square square){
-        return null;
     }
 
     @Override
