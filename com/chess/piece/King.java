@@ -14,41 +14,31 @@ public class King extends AbstractPiece{
 
     @Override
     public List<Location> getValidMoves(Board board){
-        //List<Location> moveCandidates = Collections.emptyList();
-        List<Location> moveCandidates = new ArrayList<>();
+
         Map<Location, Square> squareMap = board.getLocationSquareMap();
         Location currentLocation = this.getCurrentSquare().getLocation();
-        for (int r = -1; r <= 1; r++){
-            for (int f = -1; f <= 1; f++){
-                if (r==0 ^ f==0){
-                    moveCandidates.add(LocationFactory.buildLocation(currentLocation, r, f));
-                }
-            }
-        }
-        
-        // approach without lambda function by introducing local map:
-        List<Location> validMoves = moveCandidates.stream().filter(squareMap::containsKey).collect(Collectors.toList());
+        int[][] offsets = {
+            {-1, 1}, 
+            {-1, 0},
+            {-1, -1}, 
+            {0, -1},
+            {0, 1}, 
+            {1, 0},
+            {1, 0}, 
+            {1, -1},
+        };
 
-        return validMoves.stream().filter((candidate) -> {
-                    // in case the file is equal to the current one AND the candidate is occupied, then leave away candidate
-                    // this one is for STRAIGHT moves
-                    if(
-                        candidate.getFile().equals(this.getCurrentSquare().getLocation().getFile()) 
-                        && squareMap.get(candidate).getIsOccupied()
-                        )
-                    {return false;}
+        List<Location> moveCandidates = this.filterMovesInBoard(offsets, currentLocation);
+
+        return moveCandidates.stream().filter((candidate) -> {
+                    if((squareMap.get(candidate).getIsOccupied() && 
+                        squareMap.get(candidate).getCurrentPiece().getPieceColor().equals(this.pieceColor))){
+                        return false;
+                    }
                     else{
-                        // this one is for CAPTURING moves: the color needs to be the one of the opponent
-                        return !squareMap.get(candidate).getCurrentPiece().pieceColor.equals(this.getPieceColor());
+                        return true;
                     }
                 }
             ).collect(Collectors.toList());
     }
-
-/*     @Override
-    public void makeMove(Square square){
-        Square current = this.getCurrentSquare();
-        this.setCurrentSquare(square);
-        current.reset();
-    }; */
 }

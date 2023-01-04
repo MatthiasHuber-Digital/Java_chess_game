@@ -53,7 +53,7 @@ public class Knight extends AbstractPiece{
         // approach without lambda function by introducing local map:
         //List<Location> validMoves = moveCandidates.stream().filter(squareMap::containsKey).collect(Collectors.toList());
         
-        System.out.println("Candidates that are on the board: " + moveCandidates.toString());
+        //System.out.println("Candidates that are on the board: " + moveCandidates.toString());
         /*
         for (Location candidate : moveCandidates){
             if ((squareMap.get(candidate).getIsOccupied() && 
