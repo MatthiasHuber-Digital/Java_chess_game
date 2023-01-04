@@ -6,6 +6,8 @@ public class LocationFactory {
     // THIS IS INTERESTING: the location is being BUILT together
     public static Location buildLocation(Location current, Integer fileOffset, Integer rankOffset){
         Integer currentFile = current.getFile().ordinal(); // ordinal returns the integer value belonging to the enum value
-        return new Location(files[currentFile + fileOffset], current.getRank() + rankOffset); // for rank, unlike for file, the format is integer
+        File targetFile = files[currentFile + fileOffset];
+        int targetRank = current.getRank() + rankOffset;
+        return new Location(targetFile, targetRank); // for rank, unlike for file, the format is integer
     }
 }
