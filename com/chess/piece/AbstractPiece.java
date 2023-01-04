@@ -46,7 +46,7 @@ public abstract class AbstractPiece implements Movable{
         currentSquare.reset();
     };
 
-    protected List<Location> filterMovesInBoard(int[][] offsets, Location currentLocation){
+    protected ArrayList<Location> filterMovesInBoard(int[][] offsets, Location currentLocation){
 
         ArrayList<Location> moveCandidates = new ArrayList<>();
         int currentFile = currentLocation.getFile().ordinal();
@@ -75,7 +75,7 @@ public abstract class AbstractPiece implements Movable{
             //}
         }
 
-        System.out.println("FINAL CANDIDATES: " + moveCandidates.toString());
+        //System.out.println("FINAL CANDIDATES: " + moveCandidates.toString());
 
         return moveCandidates;
     }
