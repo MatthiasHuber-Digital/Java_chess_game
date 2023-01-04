@@ -20,6 +20,7 @@ public class Square {
 
     public void setCurrentPiece(AbstractPiece currentPiece){
         this.currentPiece = currentPiece;
+        this.isOccupied = true;
     }
 
     public void reset(){

@@ -13,17 +13,19 @@ public class Pawn extends AbstractPiece{
         super(pieceColor);
         this.name = "Pawn";
         if (this.pieceColor.equals(PieceColor.LIGHT)){
-            rankDirectionMultiplier = -1;
+            rankDirectionMultiplier = 1;
         }
         else{
-            rankDirectionMultiplier = 1;
+            rankDirectionMultiplier = -1;
         }
     }
 
     @Override
     public List<Location> getValidMoves(Board board){
-        List<Location> moveCandidates = Collections.emptyList();
+        //List<Location> moveCandidates = Collections.emptyList();
+        List<Location> moveCandidates = new ArrayList<>();
         Location currentLocation = this.getCurrentSquare().getLocation();
+        
         moveCandidates.add(LocationFactory.buildLocation(currentLocation, 0, 1 * rankDirectionMultiplier));
         if (isFirstMove){
             moveCandidates.add(LocationFactory.buildLocation(currentLocation, 0, 2 * rankDirectionMultiplier));
@@ -62,13 +64,5 @@ public class Pawn extends AbstractPiece{
                 }
             ).collect(Collectors.toList());
     }
-
-    @Override
-    public void makeMove(Square targetSquare){
-        Square currentSquare = this.getCurrentSquare();
-        this.setCurrentSquare(targetSquare);
-        targetSquare.setCurrentPiece(currentSquare.getCurrentPiece());
-        currentSquare.reset();
-    };
 
 }

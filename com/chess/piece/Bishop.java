@@ -57,10 +57,10 @@ public class Bishop extends AbstractPiece{
         }
     }
 
-    @Override
+/*     @Override
     public void makeMove(Square square){
         Square current = this.getCurrentSquare();
         this.setCurrentSquare(square);
         current.reset();
-    };
+    }; */
 }

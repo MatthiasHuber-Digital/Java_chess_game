@@ -14,7 +14,8 @@ public class King extends AbstractPiece{
 
     @Override
     public List<Location> getValidMoves(Board board){
-        List<Location> moveCandidates = Collections.emptyList();
+        //List<Location> moveCandidates = Collections.emptyList();
+        List<Location> moveCandidates = new ArrayList<>();
         Map<Location, Square> squareMap = board.getLocationSquareMap();
         Location currentLocation = this.getCurrentSquare().getLocation();
         for (int r = -1; r <= 1; r++){
@@ -44,10 +45,10 @@ public class King extends AbstractPiece{
             ).collect(Collectors.toList());
     }
 
-    @Override
+/*     @Override
     public void makeMove(Square square){
         Square current = this.getCurrentSquare();
         this.setCurrentSquare(square);
         current.reset();
-    };
+    }; */
 }
