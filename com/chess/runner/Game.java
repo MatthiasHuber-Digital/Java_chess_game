@@ -31,58 +31,74 @@ public class Game {
     }
 
     private static void movePieceIfPermitted(String line, Board board){
+        
+        if (inputCoordinatesInChessboard(line)){
+            String[] fromTo = line.split("-");
 
-        String[] fromTo = line.split("-");
-        // we need the enum FILE from an integer value, that fom the string conversion of a character 
-        // that character is cast to upper case. 
-        // the character is the first character of the "origin"
-        File fromFile = File.valueOf(String.valueOf(Character.toUpperCase(fromTo[0].charAt(0))));
-        int fromRank = Integer.parseInt(String.valueOf(fromTo[0].charAt(1)));
-        // we proceed similarly for the destination:
-        File toFile = File.valueOf(String.valueOf(Character.toUpperCase(fromTo[1].charAt(0))));
-        int toRank = Integer.parseInt(String.valueOf(fromTo[1].charAt(1)));
-    
-        Square fromSquare = board.getLocationSquareMap().get(new Location(fromFile, fromRank));
-        Square toSquare = board.getLocationSquareMap().get(new Location(toFile, toRank));
+            // we need the enum FILE from an integer value, that fom the string conversion of a character 
+            // that character is cast to upper case. 
+            // the character is the first character of the "origin"
+            File fromFile = File.valueOf(String.valueOf(Character.toUpperCase(fromTo[0].charAt(0))));
+            int fromRank = Integer.parseInt(String.valueOf(fromTo[0].charAt(1)));
+            
+            // we proceed similarly for the destination:
+            File toFile = File.valueOf(String.valueOf(Character.toUpperCase(fromTo[1].charAt(0))));
+            int toRank = Integer.parseInt(String.valueOf(fromTo[1].charAt(1)));
+            
+            Square fromSquare = board.getLocationSquareMap().get(new Location(fromFile, fromRank));
+            Square toSquare = board.getLocationSquareMap().get(new Location(toFile, toRank));
 
-        AbstractPiece currentPiece = fromSquare.getCurrentPiece();
-
-        List<Location> validMoves = currentPiece.getValidMoves(board);
-        // go through validMoves list and see if we have a location with identical rank and file
-        Boolean isValidMove = false;
-        for (Location l : validMoves) {
-            //System.out.println("toFile: " + toFile);
-            //System.out.println("toRank: " + toRank);
-
-            if (toFile.equals(l.getFile()) && toRank == l.getRank()){
-                isValidMove = true;
-                break;
+            if (!fromSquare.getIsOccupied()) {
+                System.out.println("The source square is invalid: choose a source square occupied with your own color's piece.");
+                return;
             }
-        }
 
-        if (isValidMove){
-            currentPiece.makeMove(toSquare, toFile, toRank, board);
-            // pawns need special checks
-            if (currentPiece.getName().equals("Pawn")){
-                // each pawn's first move allows for walking 2 squares straight ahead. Afterwards, we deactivate this possibilty:
-                if (currentPiece.getIsFirstMove()){
-                    currentPiece.deactivateFirstMove();
-                } 
-                else{
-                    if ((currentPiece.getPieceColor() == PieceColor.LIGHT) && (currentPiece.getCurrentSquare().getLocation().getRank() == 8) ||
-                        (currentPiece.getPieceColor() == PieceColor.DARK) && (currentPiece.getCurrentSquare().getLocation().getRank() == 1)){
-                            currentPiece.returnChosenPieceToBoard(board);
-                        }
+            AbstractPiece currentPiece = fromSquare.getCurrentPiece();
+
+            List<Location> validMoves = currentPiece.getValidMoves(board);
+            // go through validMoves list and see if we have a location with identical rank and file
+            Boolean isValidMove = false;
+            for (Location l : validMoves) {
+                //System.out.println("toFile: " + toFile);
+                //System.out.println("toRank: " + toRank);
+    
+                if (toFile.equals(l.getFile()) && toRank == l.getRank()){
+                    isValidMove = true;
+                    break;
                 }
             }
-
-
-            board.printBoard();
+    
+            if (isValidMove){
+                currentPiece.makeMove(toSquare, toFile, toRank, board);
+                // pawns need special checks
+                if (currentPiece.getName().equals("Pawn")){
+                    // each pawn's first move allows for walking 2 squares straight ahead. Afterwards, we deactivate this possibilty:
+                    if (currentPiece.getIsFirstMove()){
+                        currentPiece.deactivateFirstMove();
+                    } 
+                    else{
+                        if ((currentPiece.getPieceColor() == PieceColor.LIGHT) && (currentPiece.getCurrentSquare().getLocation().getRank() == 8) ||
+                            (currentPiece.getPieceColor() == PieceColor.DARK) && (currentPiece.getCurrentSquare().getLocation().getRank() == 1)){
+                                currentPiece.returnChosenPieceToBoard(board);
+                            }
+                    }
+                }
+    
+    
+                board.printBoard();
+            }
+            else{
+                System.out.println("The planned move is not permitted with the chosen piece. Please try again.");
+            }
         }
         else{
-            System.out.println("The planned move is invalid. Enter a valid move.");
+            System.out.println("Invalid input characters or coordinates not in chess board. Please try again.");
         }
 
+    }
+
+    private static boolean inputCoordinatesInChessboard(String line){
+        return line.matches("[a-hA-H]+[1-8]+['-]+[a-hA-H]+[1-8]");
     }
 
 }
