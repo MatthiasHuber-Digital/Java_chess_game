@@ -1,8 +1,8 @@
 package com.chess.piece;
-import java.util.List;
 import com.chess.common.*;
 import com.chess.board.*;
 import com.chess.squares.*;
+import java.util.*;
 
 public interface Movable {
     List<Location> getValidMoves(Board board);

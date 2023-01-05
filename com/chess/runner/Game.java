@@ -7,17 +7,20 @@ import java.util.*;
 
 
 public class Game {
+    
+    public static Scanner input_scan = new Scanner(System.in);
+
     public static void main(String[] args){
         Board board = new Board();
         board.printBoard();
         //board.getLightPieces().forEach(System.out::println);
 
-        try (Scanner scanner = new Scanner(System.in)) {
+        try {
             // true means the game is not finished
             while(true){
                 // E2 E4  -- origin and destination
-                String line = scanner.nextLine();
-                movePieceIfPermitted(line, board);
+                String moveLine = input_scan.nextLine();
+                movePieceIfPermitted(moveLine, board);
 
             }
         } catch (UnsupportedOperationException e) {
@@ -59,6 +62,21 @@ public class Game {
 
         if (isValidMove){
             currentPiece.makeMove(toSquare, toFile, toRank, board);
+            // pawns need special checks
+            if (currentPiece.getName().equals("Pawn")){
+                // each pawn's first move allows for walking 2 squares straight ahead. Afterwards, we deactivate this possibilty:
+                if (currentPiece.getIsFirstMove()){
+                    currentPiece.deactivateFirstMove();
+                } 
+                else{
+                    if ((currentPiece.getPieceColor() == PieceColor.LIGHT) && (currentPiece.getCurrentSquare().getLocation().getRank() == 8) ||
+                        (currentPiece.getPieceColor() == PieceColor.DARK) && (currentPiece.getCurrentSquare().getLocation().getRank() == 1)){
+                            currentPiece.returnChosenPieceToBoard(board);
+                        }
+                }
+            }
+
+
             board.printBoard();
         }
         else{
@@ -67,7 +85,4 @@ public class Game {
 
     }
 
-    public static void printPiece(Movable piece){
-        piece.getValidMoves(null);
-    }
 }
