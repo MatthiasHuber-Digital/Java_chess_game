@@ -12,17 +12,17 @@ public class Rook extends AbstractPiece{
     }
     
     @Override
-    public List<Location> getValidMoves(Board board){
+    public ArrayList<Location> getValidMoves(Board board){
         Map<Location, Square> squareMap = board.getLocationSquareMap();
         return getSquareDependentMoveCandidates(this.getCurrentSquare(), squareMap);
     }
 
-    private List<Location> getSquareDependentMoveCandidates(
+    private ArrayList<Location> getSquareDependentMoveCandidates(
         Square square,
         Map<Location, Square> squareMap
         ){
         Location currentLocation = square.getLocation();
-        List<Location> moveCandidates = new ArrayList<>();
+        ArrayList<Location> moveCandidates = new ArrayList<>();
         getMoves(moveCandidates, squareMap, currentLocation, 1, 0);
         getMoves(moveCandidates, squareMap, currentLocation, -1, 0);
         getMoves(moveCandidates, squareMap, currentLocation, 0, 1);
@@ -31,7 +31,7 @@ public class Rook extends AbstractPiece{
     }
 
     private void getMoves(
-        List<Location> candidates,
+        ArrayList<Location> candidates,
         Map<Location, Square> squareMap,
         Location currentLocation,
         int rankOffset,

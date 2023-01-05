@@ -64,10 +64,11 @@ public class Board {
     }
 
     // helper methods
+    // light pieces start from the lower half of the board
     public List<AbstractPiece> getLightPieces() {
         return lightPieces;
     }
-
+    // dark pieces start from the upper half of the board
     public List<AbstractPiece> getDarkPieces() {
         return darkPieces;
     }

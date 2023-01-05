@@ -1,13 +1,18 @@
 package com.chess.piece;
 import com.chess.squares.*;
 import com.chess.common.*;
+import com.chess.runner.Game;
 import com.chess.board.*;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.management.relation.RelationServiceNotRegisteredException;
 
 public abstract class AbstractPiece implements Movable{
     protected String name;
     protected PieceColor pieceColor;
     protected Square currentSquare;
+    private boolean pieceHasBeenCaptured = false;
 
     public AbstractPiece(PieceColor pieceColor){
         this.pieceColor = pieceColor;
@@ -41,6 +46,12 @@ public abstract class AbstractPiece implements Movable{
     @Override
     public void makeMove(Square targetSquare, File targetFile, int targetRank, Board board){
         Square currentSquare = this.getCurrentSquare();
+
+        // capturing pieces - means removing them from the board:
+        if (targetSquare.getIsOccupied() && !targetSquare.getCurrentPiece().getPieceColor().equals(this.getPieceColor())){
+            removePieceFromBoard(targetSquare.getCurrentPiece());
+        }
+
         this.setCurrentSquare(targetSquare);
         targetSquare.setCurrentPiece(currentSquare.getCurrentPiece());
         currentSquare.reset();
@@ -80,4 +91,72 @@ public abstract class AbstractPiece implements Movable{
         return moveCandidates;
     }
 
+    private static void removePieceFromBoard(AbstractPiece piece){
+        piece.pieceHasBeenCaptured = true;
+        piece.currentSquare = null;
+    }
+
+    public void deactivateFirstMove(){
+        // only for pawns
+    }
+
+    public boolean getIsFirstMove(){
+        return false;
+    }
+
+    // this method returns a piece of the user's choice to the board IN CASE THE PAWN HAS REACHED THE FARTHEST RANK
+    public void returnChosenPieceToBoard(Board board){
+        List<AbstractPiece> revivingList = new ArrayList<>();
+
+        if (this.pieceColor.equals(pieceColor.LIGHT)){
+            revivingList = board.getLightPieces();
+        }
+        else{
+            revivingList = board.getDarkPieces();
+        }
+
+        revivingList = revivingList.stream().filter(piece -> {return(piece.pieceHasBeenCaptured);}).collect(Collectors.toList());
+
+        if (revivingList.isEmpty()){
+            System.out.println(String.format("The %s player's pawn reached the farthest rank, but there are no pieces to revive.", this.getPieceColor()));
+        }
+        else{
+            this.pieceHasBeenCaptured = true;
+            System.out.println(String.format("The %s player's pawn reached the farthest rank. Please choose which piece to revive: ", this.getPieceColor()));
+            
+            for (AbstractPiece piece : revivingList){
+                System.out.println(piece.getName());
+            }
+            
+            try {
+                
+                boolean pieceFound = false;
+                while(!pieceFound){
+                    // E2 E4  -- origin and destination
+                    String reviveLine = Game.input_scan.nextLine();
+                    
+                    for (AbstractPiece checkPiece : revivingList){
+
+                        if (reviveLine.contains(checkPiece.getName())){
+                            pieceFound = true;
+                            checkPiece.setCurrentSquare(this.currentSquare);
+                            checkPiece.pieceHasBeenCaptured = false;
+                            removePieceFromBoard(this);
+                            break;
+                        }
+                        
+                    }
+                    
+                    if (!pieceFound){
+                        System.out.println("Your choice is invalid. Please try again.");
+                    }
+
+                }
+            } catch (UnsupportedOperationException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
+    
 }
