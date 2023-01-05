@@ -9,6 +9,7 @@ import java.util.*;
 public class Game {
     
     public static Scanner input_scan = new Scanner(System.in);
+    private static PieceColor turnOfColor = PieceColor.LIGHT;
 
     public static void main(String[] args){
         Board board = new Board();
@@ -19,6 +20,7 @@ public class Game {
             // true means the game is not finished
             while(true){
                 // E2 E4  -- origin and destination
+                System.out.println("Enter move:");
                 String moveLine = input_scan.nextLine();
                 movePieceIfPermitted(moveLine, board);
 
@@ -48,47 +50,51 @@ public class Game {
             Square fromSquare = board.getLocationSquareMap().get(new Location(fromFile, fromRank));
             Square toSquare = board.getLocationSquareMap().get(new Location(toFile, toRank));
 
-            if (!fromSquare.getIsOccupied()) {
-                System.out.println("The source square is invalid: choose a source square occupied with your own color's piece.");
-                return;
-            }
+            if (fromSquare.getIsOccupied()) {
+                AbstractPiece currentPiece = fromSquare.getCurrentPiece();
 
-            AbstractPiece currentPiece = fromSquare.getCurrentPiece();
-
-            List<Location> validMoves = currentPiece.getValidMoves(board);
-            // go through validMoves list and see if we have a location with identical rank and file
-            Boolean isValidMove = false;
-            for (Location l : validMoves) {
-                //System.out.println("toFile: " + toFile);
-                //System.out.println("toRank: " + toRank);
-    
-                if (toFile.equals(l.getFile()) && toRank == l.getRank()){
-                    isValidMove = true;
-                    break;
-                }
-            }
-    
-            if (isValidMove){
-                currentPiece.makeMove(toSquare, toFile, toRank, board);
-                // pawns need special checks
-                if (currentPiece.getName().equals("Pawn")){
-                    // each pawn's first move allows for walking 2 squares straight ahead. Afterwards, we deactivate this possibilty:
-                    if (currentPiece.getIsFirstMove()){
-                        currentPiece.deactivateFirstMove();
-                    } 
-                    else{
-                        if ((currentPiece.getPieceColor() == PieceColor.LIGHT) && (currentPiece.getCurrentSquare().getLocation().getRank() == 8) ||
-                            (currentPiece.getPieceColor() == PieceColor.DARK) && (currentPiece.getCurrentSquare().getLocation().getRank() == 1)){
-                                currentPiece.returnChosenPieceToBoard(board);
+                if (currentPiece.getPieceColor().equals(turnOfColor)){
+                    List<Location> validMoves = currentPiece.getValidMoves(board);
+                    // go through validMoves list and see if we have a location with identical rank and file
+                    Boolean isValidMove = false;
+                    for (Location l : validMoves) {
+                        //System.out.println("toFile: " + toFile);
+                        //System.out.println("toRank: " + toRank);
+            
+                        if (toFile.equals(l.getFile()) && toRank == l.getRank()){
+                            isValidMove = true;
+                            break;
+                        }
+                    }
+            
+                    if (isValidMove){
+                        currentPiece.makeMove(toSquare, toFile, toRank, board);
+                        // pawns need special checks
+                        if (currentPiece.getName().equals("Pawn")){
+                            // each pawn's first move allows for walking 2 squares straight ahead. Afterwards, we deactivate this possibilty:
+                            if (currentPiece.getIsFirstMove()){
+                                currentPiece.deactivateFirstMove();
+                            } 
+                            else{
+                                if ((currentPiece.getPieceColor() == PieceColor.LIGHT) && (currentPiece.getCurrentSquare().getLocation().getRank() == 8) ||
+                                    (currentPiece.getPieceColor() == PieceColor.DARK) && (currentPiece.getCurrentSquare().getLocation().getRank() == 1)){
+                                        currentPiece.returnChosenPieceToBoard(board);
+                                    }
                             }
+                        }
+                        board.printBoard();
+                        turnOfColor = turnOfColor.next();
+                    }
+                    else{
+                        System.out.println("The chosen piece cannot move to this square.");
                     }
                 }
-    
-    
-                board.printBoard();
+                else{
+                    System.out.println("The picked piece's color is: " + currentPiece.getPieceColor() + ", but actually it's the other color's turn.");
+                }
             }
             else{
-                System.out.println("The planned move is not permitted with the chosen piece. Please try again.");
+                System.out.println("The origin square is invalid because it's empty.");
             }
         }
         else{
