@@ -47,7 +47,6 @@ public abstract class AbstractPiece implements Movable{
     public void makeMove(Square targetSquare, File targetFile, int targetRank, Board board){
         Square currentSquare = this.getCurrentSquare();
 
-        // capturing pieces - means removing them from the board:
         if (targetSquare.getIsOccupied() && !targetSquare.getCurrentPiece().getPieceColor().equals(this.getPieceColor())){
             removePieceFromBoard(targetSquare.getCurrentPiece());
         }
@@ -63,33 +62,86 @@ public abstract class AbstractPiece implements Movable{
         int currentFile = currentLocation.getFile().ordinal();
         int currentRank = currentLocation.getRank();
 
-        //System.out.println("current file: " + File.values()[currentFile] + "... and has the ordinal: " + currentFile);
-        //System.out.println("current rank: " + currentRank);
-
         for (int i=0; i<offsets.length; i++){
             int fileOffset = offsets[i][0];
             int rankOffset = offsets[i][1];
             int targetFile = currentFile + fileOffset;
             int targetRank = currentRank + rankOffset;
 
-            //System.out.println("checking targetFile: " + targetFile);
-            //System.out.println("checking targetRank: " + targetRank);
-
             if ( (targetFile>=0) && (targetFile<=7) && (targetRank >=1 ) && (targetRank <= 8) ){
-                //System.out.println("...move is OK!");
                 Location addedLocation = LocationFactory.buildLocation(currentLocation, fileOffset, rankOffset);
                 moveCandidates.add(addedLocation);
-                //System.out.println("Candidates: " + moveCandidates.toString());
             }
-            //else{
-            //    System.out.println("...invalid move.");
-            //}
+
         }
 
-        //System.out.println("FINAL CANDIDATES: " + moveCandidates.toString());
 
         return moveCandidates;
     }
+
+    protected ArrayList<Location> filterStraightMovesInBoard(int[][] offsets, Location currentLocation){
+        int[][] tempOffsets = new int[4][2];
+
+        int moveMultiplier = 1;
+        ArrayList<Location> moveCandidates = new ArrayList<>();
+        ArrayList<Location> newMoveCandidates = this.filterMovesInBoard(offsets, currentLocation);
+
+        while (!newMoveCandidates.isEmpty()){
+            for (Location candidate : newMoveCandidates){
+                moveCandidates.add(candidate);
+            }
+            moveMultiplier++;
+            for (int i=0; i<offsets.length; i++) {
+                tempOffsets[i][0] = offsets[i][0] * moveMultiplier;
+                tempOffsets[i][1] = offsets[i][1] * moveMultiplier;
+              }
+            newMoveCandidates = this.filterMovesInBoard(tempOffsets, currentLocation);
+        }
+
+        return moveCandidates;
+    }
+
+    protected ArrayList<Location> filterUnblockedStraightMoves(ArrayList<Location> moveCandidates, Map<Location, Square> squareMap, Location currentLocation, int[][] offsets){
+        ArrayList<Location> deleteCandidates = new ArrayList<>();
+        
+        for (int curOffset=0; curOffset<offsets.length; curOffset++){
+            int currentFileOrdinal = currentLocation.getFile().ordinal();
+            int currentRank = currentLocation.getRank();
+
+            int factor = 1;
+            int potentialFileOrdinal = currentFileOrdinal  + (factor * offsets[curOffset][0]);
+            int potentialRank = currentRank + (factor * offsets[curOffset][1]);
+            boolean removeRemainingCandidates = false;
+            while ((potentialFileOrdinal>=0) && (potentialFileOrdinal<=7) && (potentialRank >=1 ) && (potentialRank <= 8)){
+                Location potentialLocation = LocationFactory.buildLocation(currentLocation, factor * offsets[curOffset][0], factor * offsets[curOffset][1]);
+                
+                if (!removeRemainingCandidates){
+                    // this is the checking-algorithm for finding out if this direction has already been blocked
+                    if (squareMap.get(potentialLocation).getIsOccupied()){
+                        if (squareMap.get(potentialLocation).getCurrentPiece().getPieceColor().equals(this.pieceColor)){
+                            deleteCandidates.add(potentialLocation);
+                        }
+                        removeRemainingCandidates = true;
+                    }                    
+                }
+                else{
+                    //this is the removing algorithm
+                    deleteCandidates.add(potentialLocation);
+                }
+
+                factor++;
+                potentialFileOrdinal = currentFileOrdinal + (factor * offsets[curOffset][0]);
+                potentialRank = currentRank + (factor * offsets[curOffset][1]);
+            }
+        }
+
+        for (Location removeLocation : deleteCandidates){
+            moveCandidates.removeIf(candidate -> (candidate.getFile() == removeLocation.getFile())
+                                                    && (candidate.getRank() == removeLocation.getRank()));
+        }
+
+        return moveCandidates;
+    } 
 
     private static void removePieceFromBoard(AbstractPiece piece){
         piece.pieceHasBeenCaptured = true;
