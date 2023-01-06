@@ -22,21 +22,12 @@ public class Queen extends AbstractPiece{
         this.rook = rook;
     }
 
-    // this one is interesting because it creates an empty list of locations
-    // ...and then adds valid moves of rook and bishop
     @Override
     public List<Location> getValidMoves(Board board){
-        //List<Location> moveCandidates = Collections.emptyList();
-        List<Location> moveCandidates = new ArrayList<>();
+        List<Location> moveCandidates = Collections.emptyList();
+        //List<Location> moveCandidates = new ArrayList<>();
         moveCandidates.addAll(bishop.getValidMoves(board));
         moveCandidates.addAll(rook.getValidMoves(board));
-        return moveCandidates;
+        return moveCandidates; 
     }
-
-/*     @Override
-    public void makeMove(Square square){
-        Square current = this.getCurrentSquare();
-        this.setCurrentSquare(square);
-        current.reset();
-    }; */
 }

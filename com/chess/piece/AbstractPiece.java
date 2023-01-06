@@ -12,7 +12,7 @@ public abstract class AbstractPiece implements Movable{
     protected String name;
     protected PieceColor pieceColor;
     protected Square currentSquare;
-    private boolean pieceHasBeenCaptured = false;
+    public boolean pieceHasBeenCaptured = false;
 
     public AbstractPiece(PieceColor pieceColor){
         this.pieceColor = pieceColor;

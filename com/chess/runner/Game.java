@@ -3,6 +3,9 @@ import com.chess.board.*;
 import com.chess.common.*;
 import com.chess.piece.*;
 import com.chess.squares.*;
+
+import java.util.stream.Collectors;
+import java.text.Format;
 import java.util.*;
 
 
@@ -10,6 +13,7 @@ public class Game {
     
     public static Scanner input_scan = new Scanner(System.in);
     private static PieceColor turnOfColor = PieceColor.LIGHT;
+    private static PieceColor matchWinner = null;
 
     public static void main(String[] args){
         Board board = new Board();
@@ -18,13 +22,15 @@ public class Game {
 
         try {
             // true means the game is not finished
-            while(true){
+            while(!isCheckMate(board)){
                 // E2 E4  -- origin and destination
                 System.out.println("Enter move:");
                 String moveLine = input_scan.nextLine();
                 movePieceIfPermitted(moveLine, board);
 
             }
+            System.out.println(String.format("Checkmate: %s won the match.", matchWinner));
+
         } catch (UnsupportedOperationException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -107,4 +113,38 @@ public class Game {
         return line.matches("[a-hA-H]+[1-8]+['-]+[a-hA-H]+[1-8]");
     }
 
+    private static boolean isCheckMate(Board board){
+
+        List<AbstractPiece> checkPieceCandidates = new ArrayList<>();
+        if (turnOfColor.equals(PieceColor.DARK)){
+            checkPieceCandidates = board.getDarkPieces();
+        }
+        else{
+            checkPieceCandidates = board.getLightPieces();
+        }
+
+        checkPieceCandidates.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
+        AbstractPiece king = new King(turnOfColor);
+
+        for (AbstractPiece candidate : checkPieceCandidates){
+            if (candidate.getName().equals("King")){
+                king = candidate;
+            }
+        }
+
+        for (AbstractPiece candidate : checkPieceCandidates){
+            if (!candidate.getName().equals("Queen")){
+                try{
+                    List<Location> tempList = candidate.getValidMoves(board);
+                    if ((!tempList.isEmpty()) && (tempList.contains(king.getCurrentSquare().getLocation()))){
+                        return true;
+                    }
+                }
+                catch (NullPointerException e){
+                    e.printStackTrace();
+                }
+            }
+        }
+        return false;
+    }
 }
