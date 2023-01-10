@@ -5,6 +5,7 @@ import com.chess.runner.Game;
 import com.chess.board.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.lang.Math;
 
 import javax.management.relation.RelationServiceNotRegisteredException;
 
@@ -80,7 +81,7 @@ public abstract class AbstractPiece implements Movable{
     }
 
     protected ArrayList<Location> filterStraightMovesInBoard(int[][] offsets, Location currentLocation){
-        int[][] tempOffsets = new int[4][2];
+        int[][] tempOffsets = new int[offsets.length][2];
 
         int moveMultiplier = 1;
         ArrayList<Location> moveCandidates = new ArrayList<>();
@@ -211,4 +212,27 @@ public abstract class AbstractPiece implements Movable{
         }
     }
     
+
+    public List<Location> getNeighbourLocations(Board board) {
+        List<Location> neighbourLocations = new ArrayList<>();
+        Location currentLocation = this.getCurrentSquare().getLocation();
+        int currentFileOrdinal = currentLocation.getFile().ordinal();
+        int currentRank = currentLocation.getRank();
+
+        /*
+        for (int fileOffset = -1; fileOffset <= +1; fileOffset++) {
+            for (int rankOffset = -1; rankOffset <= +1; rankOffset++) {
+                // all neighbouring fields: save locations
+
+                neighbourLocations.add();
+            }
+        }
+        */
+        
+        neighbourLocations = board.getLocationSquareMap().keySet().stream().filter(loc -> { 
+            return (Math.abs(loc.getFile().ordinal() - currentFileOrdinal) <= 1) && (Math.abs(loc.getRank() - currentRank) <= 1);
+        }).collect(Collectors.toList());
+
+        return neighbourLocations;
+    }
 }

@@ -1,4 +1,5 @@
 package com.chess.runner;
+
 import com.chess.board.*;
 import com.chess.common.*;
 import com.chess.piece.*;
@@ -8,12 +9,19 @@ import java.util.stream.Collectors;
 import java.text.Format;
 import java.util.*;
 
-
 public class Game {
     
     public static Scanner input_scan = new Scanner(System.in);
     private static PieceColor turnOfColor = PieceColor.LIGHT;
     private static PieceColor matchWinner = null;
+    private static boolean isCheckMate = false;
+    private static boolean isCheck = true;
+    private static List<Location> kingNeighborLocations = new ArrayList<>();
+    private static List<AbstractPiece> enemyCheckHolders = new ArrayList<>();
+    private static Map<AbstractPiece, List<Location>> checkLockedLocationsMap = new HashMap<>();
+    private static Map<AbstractPiece, List<Location>> possiblePieceMoves = new HashMap<>();
+    private static Map<AbstractPiece, List<Location>> checkResolvingMoves = new HashMap<>();
+    private static AbstractPiece king;
 
     public static void main(String[] args){
         Board board = new Board();
@@ -21,13 +29,30 @@ public class Game {
         //board.getLightPieces().forEach(System.out::println);
 
         try {
-            // true means the game is not finished
-            while(!isCheckMate(board)){
-                // E2 E4  -- origin and destination
-                System.out.println("Enter move:");
-                String moveLine = input_scan.nextLine();
-                movePieceIfPermitted(moveLine, board);
-
+            
+            while(!isCheckMate){
+                
+                if (isCheck){
+                    System.out.println(String.format("%s player - your king is in check.", turnOfColor));
+                    System.out.println(String.format("%s player - enter move:", turnOfColor));
+                    String moveLine = input_scan.nextLine();
+                    
+                    if (isCheckResolvingMove()){
+                        movePieceWithoutValidation(moveLine, board);
+                    } 
+                    else{
+                        System.out.println("The move you entered does not resolve the check. Please try again.");
+                    }
+                }
+                else{
+                    System.out.println(String.format("%s player - enter move:", turnOfColor));
+                    String moveLine = input_scan.nextLine();
+                    movePieceIfPermitted(moveLine, board);
+                }
+                checkForCheckedKing(board);
+                if(isCheck){
+                    checkForCheckmate();
+                }
             }
             System.out.println(String.format("Checkmate: %s won the match.", matchWinner));
 
@@ -113,38 +138,114 @@ public class Game {
         return line.matches("[a-hA-H]+[1-8]+['-]+[a-hA-H]+[1-8]");
     }
 
-    private static boolean isCheckMate(Board board){
+    private static void getKingOfTurn(Board board){
+            // we need to select the king of the color currently active
+            List<AbstractPiece> kingList = new ArrayList<>();
+            AbstractPiece king = new King(turnOfColor);
+            // 
+            for (AbstractPiece candidate : kingList){
+                if (candidate.getName().equals("King")){
+                    king = candidate;
+                }
+            }
+    }
 
-        List<AbstractPiece> checkPieceCandidates = new ArrayList<>();
+    private static void checkForCheckedKing(Board board){
+
+        getKingOfTurn(board);
+        // load the king's neighbouring locations:
+        kingNeighborLocations = king.getNeighbourLocations();
+
+        // load all possible moves of the enemy
+        possiblePieceMoves(board);
+
+        boolean isCheck = false;
+        List<Location> tempList = new ArrayList<>();
+        // go through the potential enemy moves
+        // a) look if any enemy piece keeps the king in check
+        // b) save pieces and locations next to the king which are potential move destinations of the enemy
+        // c) save a list of pieces exerting the check
+        for (AbstractPiece pieceCandidate : possiblePieceMoves.keySet()){
+            tempList = possiblePieceMoves.get(pieceCandidate);
+
+            // only if there are any available moves for current piece
+            if (!tempList.isEmpty()){
+                // in case the current piece could move to the current position of the king - this is a check
+                if (tempList.contains(king.getCurrentSquare().getLocation())){
+                    isCheck = true;
+                    enemyCheckHolders.add(pieceCandidate);
+                }
+                // in any case, collect those pieces who contribute to the check itself or to the 'locking up' of the king 
+                // in his current position, and their locations in the king's neighborhood they could move to
+                tempList = tempList.stream().filter((candidateMove) -> {return kingNeighborLocations.contains(candidateMove);}).collect(Collectors.toList());
+                if (!tempList.isEmpty()){
+                    checkLockedLocationsMap.put(pieceCandidate, tempList);
+                }
+            }
+        }
+    }
+
+    private static void possiblePieceMoves(Board board){
+
+        // we need to load the valid moves of the color currently inactive - in order to assess if there's a check given
         if (turnOfColor.equals(PieceColor.DARK)){
-            checkPieceCandidates = board.getDarkPieces();
+            enemyCheckHolders = board.getLightPieces();
         }
         else{
-            checkPieceCandidates = board.getLightPieces();
+            enemyCheckHolders = board.getDarkPieces();
         }
+        // loading the pieces that could potentially keep the current king in check:
+        enemyCheckHolders.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
 
-        checkPieceCandidates.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
-        AbstractPiece king = new King(turnOfColor);
+        for (AbstractPiece piece : enemyCheckHolders){
+            List<Location> tempList = piece.getValidMoves(board);
+            possiblePieceMoves.put(piece, tempList);
+        }
+    }
 
-        for (AbstractPiece candidate : checkPieceCandidates){
-            if (candidate.getName().equals("King")){
-                king = candidate;
+    private static void checkForCheckmate(){
+        /* This function covers the following checkmate requirements:
+         * 1. King will be in check no matter to which field he moves
+         * 2. No piece can shield the king from the check
+         * 3. No piece can capture the piece(s) keeping the king in check
+         * Prerequisite: king is in check
+         */
+        isCheckMate = true;
+        List<Location> lockedList = new ArrayList<>();
+        List<Location> resolvingMovesList = new ArrayList<>();
+
+        // check if ALL king's neighboring locations are locked:
+        // ...all non-locked positions need to be added to the resolving-check move candidates.
+        lockedList = checkLockedLocationsMap.values().stream().distinct().flatMap(l -> l.stream()).collect(Collectors.toList()); // get all unique locked neighboring positions
+        
+        boolean locked;
+        for (Location neighborLoc : kingNeighborLocations){
+            locked = false;
+
+            for (Location lockedLoc : checkLockedLocationsMap){
+                if ((neighborLoc.getFile().ordinal() == lockedLoc.getFile().ordinal()) && (neighborLoc.getRank() == lockedLoc.getRank())){
+                    locked = true;
+                    break;
+                }
+            }
+
+            if (!locked){
+                resolvingMovesList.add(neighborLoc);
             }
         }
+        checkResolvingMoves.put(king, resolvingMovesList);
 
-        for (AbstractPiece candidate : checkPieceCandidates){
-            if (!candidate.getName().equals("Queen")){
-                try{
-                    List<Location> tempList = candidate.getValidMoves(board);
-                    if ((!tempList.isEmpty()) && (tempList.contains(king.getCurrentSquare().getLocation()))){
-                        return true;
-                    }
-                }
-                catch (NullPointerException e){
-                    e.printStackTrace();
-                }
-            }
-        }
-        return false;
+        // Go through all pieces keeping the king in check (enemy pieces) except for the king
+        // Check if there's a move of a current player's piece which could capture that figure
+        // ...simulate capturing that figure and if the current player's king would be still in check then
+        // ...all moves removing the check need to be added to the resolving-check move candidates.
+
+        
+        // Go through all pieces keeping the king in check (enemy pieces) except for knights, kings and pawns
+        // Go through all enemy moves keeping the king in check
+        // Then, go through all friendly pieces except for the king, and simulate shielding the king from the threat
+        // ... check if the king will be still in check under these conditions
+        // ...all moves removing the check need to be added to the resolving-check move candidates.
+
     }
 }

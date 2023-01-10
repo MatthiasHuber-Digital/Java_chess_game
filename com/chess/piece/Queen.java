@@ -5,29 +5,34 @@ import com.chess.board.*;
 import com.chess.common.*;
 
 public class Queen extends AbstractPiece{
-    // the sense of these attributes is to combine the moves of a bishop and a rook:
-    private Movable bishop;
-    private Movable rook;
 
-    // initial constructor:
     public Queen(PieceColor pieceColor){
         super(pieceColor);
         this.name = "Queen";
     }
 
-    // later constructor:
-    public Queen(PieceColor pieceColor, Movable bishop, Movable rook){
-        super(pieceColor);
-        this.bishop = bishop;
-        this.rook = rook;
-    }
-
     @Override
     public List<Location> getValidMoves(Board board){
-        List<Location> moveCandidates = Collections.emptyList();
-        //List<Location> moveCandidates = new ArrayList<>();
-        moveCandidates.addAll(bishop.getValidMoves(board));
-        moveCandidates.addAll(rook.getValidMoves(board));
-        return moveCandidates; 
+
+        Map<Location, Square> squareMap = board.getLocationSquareMap();
+        Location currentLocation = this.getCurrentSquare().getLocation();
+        ArrayList<Location> moveCandidates = new ArrayList<>();
+
+        // FILE (A), then RANK(1)
+        int[][] offsets = {
+            {1, 0}, 
+            {-1, 0}, 
+            {0, 1}, 
+            {0, -1},
+            {1, 1}, 
+            {-1, -1}, 
+            {-1, 1}, 
+            {1, -1},
+        };
+
+        moveCandidates = this.filterStraightMovesInBoard(offsets, currentLocation);
+
+        return this.filterUnblockedStraightMoves(moveCandidates, squareMap, currentLocation, offsets);
+
     }
 }
