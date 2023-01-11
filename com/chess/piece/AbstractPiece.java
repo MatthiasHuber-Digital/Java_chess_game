@@ -13,6 +13,7 @@ public abstract class AbstractPiece implements Movable{
     protected String name;
     protected PieceColor pieceColor;
     protected Square currentSquare;
+    protected Square previousSquare;
     public boolean pieceHasBeenCaptured = false;
 
     public AbstractPiece(PieceColor pieceColor){
@@ -235,4 +236,25 @@ public abstract class AbstractPiece implements Movable{
 
         return neighbourLocations;
     }
+
+    public static void simulatePieceRemovalFromBoard(AbstractPiece piece){
+        piece.previousSquare = piece.currentSquare;
+    }
+
+    public static void rollBackPieceRemovalFromBoard(AbstractPiece piece){
+        piece.pieceHasBeenCaptured = false;
+        // This function resets the current square in case it has been changed for simulation purposes (check assessment)
+        piece.currentSquare = piece.previousSquare;
+        piece.previousSquare = null;
+    }
+
+    public static void simulateCapturingMove(AbstractPiece piece){
+        piece.previousSquare = piece.currentSquare;
+    }
+
+    public static void rollBackCapturingMove(AbstractPiece piece){
+        piece.currentSquare = piece.previousSquare;
+        piece.previousSquare = null;
+    }
+
 }
