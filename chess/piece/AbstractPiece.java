@@ -5,7 +5,6 @@ import com.chess.runner.Game;
 import com.chess.board.*;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.lang.Math;
 
 import javax.management.relation.RelationServiceNotRegisteredException;
 
@@ -13,7 +12,6 @@ public abstract class AbstractPiece implements Movable{
     protected String name;
     protected PieceColor pieceColor;
     protected Square currentSquare;
-    protected Square previousSquare;
     public boolean pieceHasBeenCaptured = false;
 
     public AbstractPiece(PieceColor pieceColor){
@@ -214,47 +212,19 @@ public abstract class AbstractPiece implements Movable{
     }
     
 
-    public List<Location> getNeighbourLocations(Board board) {
+    public List<Location> getNeighbourLocations() {
         List<Location> neighbourLocations = new ArrayList<>();
         Location currentLocation = this.getCurrentSquare().getLocation();
-        int currentFileOrdinal = currentLocation.getFile().ordinal();
-        int currentRank = currentLocation.getRank();
 
-        /*
         for (int fileOffset = -1; fileOffset <= +1; fileOffset++) {
             for (int rankOffset = -1; rankOffset <= +1; rankOffset++) {
-                // all neighbouring fields: save locations
-
-                neighbourLocations.add();
+                if (fileOffset != 0 && rankOffset != 0) {
+                    // all neighbouring fields: save locations
+                    neighbourLocations.add(LocationFactory.buildLocation(currentLocation, fileOffset, rankOffset));
+                }
             }
         }
-        */
-        
-        neighbourLocations = board.getLocationSquareMap().keySet().stream().filter(loc -> { 
-            return (Math.abs(loc.getFile().ordinal() - currentFileOrdinal) <= 1) && (Math.abs(loc.getRank() - currentRank) <= 1);
-        }).collect(Collectors.toList());
 
         return neighbourLocations;
     }
-
-    public static void simulatePieceRemovalFromBoard(AbstractPiece piece){
-        piece.previousSquare = piece.currentSquare;
-    }
-
-    public static void rollBackPieceRemovalFromBoard(AbstractPiece piece){
-        piece.pieceHasBeenCaptured = false;
-        // This function resets the current square in case it has been changed for simulation purposes (check assessment)
-        piece.currentSquare = piece.previousSquare;
-        piece.previousSquare = null;
-    }
-
-    public static void simulateCapturingMove(AbstractPiece piece){
-        piece.previousSquare = piece.currentSquare;
-    }
-
-    public static void rollBackCapturingMove(AbstractPiece piece){
-        piece.currentSquare = piece.previousSquare;
-        piece.previousSquare = null;
-    }
-
 }

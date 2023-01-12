@@ -3,7 +3,6 @@ package com.chess.board;
 import com.chess.squares.*;
 import com.chess.common.*;
 import com.chess.piece.AbstractPiece;
-import com.chess.piece.King;
 import com.chess.piece.PieceColor;
 import com.chess.piece.PieceFactory;
 
@@ -13,7 +12,7 @@ public class Board {
     private static final int BOARD_LENGTH = 8;
     // Location contains the coordinates
     // Square contains the info if is occupied or not
-    public final Map<Location, Square> locationSquareMap;
+    private final Map<Location, Square> locationSquareMap;
 
     // boardSquares is for assigning colors to each square for later graphical
     // dispay:
@@ -22,8 +21,6 @@ public class Board {
     // separate pieces lists
     private final List<AbstractPiece> lightPieces = new ArrayList<>();
     private final List<AbstractPiece> darkPieces = new ArrayList<>();
-    public AbstractPiece lightKing;
-    public AbstractPiece darkKing;
 
     public Board() {
         // map zipping together the squares and location coordinates
@@ -50,14 +47,8 @@ public class Board {
                     piece.setCurrentSquare(newSquare);
                     if (piece.getPieceColor().equals(PieceColor.DARK)) {
                         darkPieces.add(piece);
-                        if (piece.getName().equals("King")){
-                            darkKing = piece;
-                        }
                     } else {
                         lightPieces.add(piece);
-                        if (piece.getName().equals("King")){
-                            lightKing = piece;
-                        }
                     }
                 }
                 boardSquares[i][column] = newSquare;
