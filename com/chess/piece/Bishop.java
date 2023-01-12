@@ -7,6 +7,14 @@ import com.chess.common.*;
 
 public class Bishop extends AbstractPiece{
     
+    // FILE (A), then RANK(1)
+    public static int[][] offsets = {
+        {1, 1}, 
+        {-1, -1}, 
+        {-1, 1}, 
+        {1, -1},
+    };
+
     public Bishop(PieceColor pieceColor){
         super(pieceColor);
         this.name = "Bishop";
@@ -66,14 +74,6 @@ public class Bishop extends AbstractPiece{
         Location currentLocation = this.getCurrentSquare().getLocation();
         ArrayList<Location> moveCandidates = new ArrayList<>();
         ArrayList<Location> newMoveCandidates = new ArrayList<>();
-
-        // FILE (A), then RANK(1)
-        int[][] offsets = {
-            {1, 1}, 
-            {-1, -1}, 
-            {-1, 1}, 
-            {1, -1},
-        };
 
         moveCandidates = this.filterStraightMovesInBoard(offsets, currentLocation);
 
