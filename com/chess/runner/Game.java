@@ -327,6 +327,48 @@ public class Game{
     } 
 
 
+    private static List<Location> filterCheckLine(AbstractPiece pieceCheckHolder){
+        // This function compiles the valid move destinations of a CHECKHOLDER enemy piece towards the KING which it is keeping in check.
+
+        List<Location> listCheckLine = new ArrayList<>();
+        int checkHolderFileOrdinal = pieceCheckHolder.getCurrentSquare().getLocation().getFile().ordinal();
+        int checkHolderRank = pieceCheckHolder.getCurrentSquare().getLocation().getRank();
+
+        int kingFileOrdinal = king.getCurrentSquare().getLocation().getFile().ordinal();
+        int kingRank = king.getCurrentSquare().getLocation().getRank();
+
+        int deltaFile = checkHolderFileOrdinal - kingFileOrdinal;
+        int deltaRank = checkHolderRank - kingRank;
+
+        int stepFile;
+        if (deltaFile==0){
+            stepFile=0;
+        }else{
+            stepFile=1;
+        }
+
+        int stepRank;
+        if (deltaRank==0){
+            stepRank=0;
+        }else{
+            stepRank=1;
+        }
+
+        //int iterFileOrdinal;
+        //int iterRank;
+        List<Location> tempList = new ArrayList<>();
+        for (int locMultiplier=1; ((locMultiplier * stepFile) < deltaFile) && ((locMultiplier * stepRank) < deltaRank); locMultiplier++){
+            //iterFileOrdinal = kingFileOrdinal + (locMultiplier * stepFile);
+            //iterRank = kingRank + (locMultiplier * stepRank);
+            listCheckLine.add(LocationFactory.buildLocation(king.getCurrentSquare().getLocation(), (locMultiplier * stepFile), (locMultiplier * stepRank)));
+        }
+
+        listCheckLine = listCheckLine.stream().filter(possibleEnemyPieceMoves.get(pieceCheckHolder)::contains).collect(Collectors.toList());
+
+        return listCheckLine;
+    }
+
+
     private static void addResolvingMovesShielding(){
 
         // Go through all pieces keeping the king in check (enemy pieces) except for the king
@@ -335,56 +377,20 @@ public class Game{
         // ...all moves removing the check need to be added to the resolving-check move candidates.
         List<AbstractPiece> longRangeCheckHolders = enemyCheckHolders.stream().filter(holder -> (holder instanceof Queen) || (holder instanceof Bishop) ||(holder instanceof Rook)).collect(Collectors.toList());
 
+        
         for (AbstractPiece pieceCheckHolder : longRangeCheckHolders){
             
             // get the connection line of squares between the check holder and the own king
             // all locations of the connection line should be assessed
+            List<Location> checkHolderCheckLine = filterCheckLine(pieceCheckHolder);
 
             for (AbstractPiece ownPiece : possibleOwnPieceMoves.keySet()){
                 
                 List<Location> ownMoveList = possibleOwnPieceMoves.get(ownPiece);
-                ownMoveList = ownMoveList.stream().filter((ownMove) -> {return pieceCheckHolder.getCurrentSquare().getLocation().equals(ownMove);}).collect(Collectors.toList());
+                ownMoveList = ownMoveList.stream().filter(checkHolderCheckLine::contains).collect(Collectors.toList());
                 
                 if (!ownMoveList.isEmpty()){
-                    List<AbstractPiece> darkPieces = board.getDarkPieces();
-                    List<AbstractPiece> lightPieces = board.getLightPieces();
-                    List<Location> uselessMovesList = new ArrayList<>();
-                    
-                    // get pieces according to color:
-                    darkPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
-                    lightPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
-
-                    // save current locations as "previous", since we're about to simulate moves and subsequently undo them again
-                    Location currentLocation = null;
-                    for (AbstractPiece darkPiece : darkPieces){
-                        currentLocation = darkPiece.getCurrentSquare().getLocation();
-                        previousDarkLocations.put(darkPiece, currentLocation);
-                    }
-                    for (AbstractPiece lightPiece : lightPieces){
-                        currentLocation = lightPiece.getCurrentSquare().getLocation();
-                        previousDarkLocations.put(lightPiece, currentLocation);
-                    }
-                    
-                    // simulate the move
-                    for (Location moveDestination : ownMoveList){
-                        AbstractPiece.simulatePieceRemovalFromBoard(pieceCheckHolder);
-                        AbstractPiece.simulateCapturingMove(ownPiece);
-                        ownPiece.makeMove(pieceCheckHolder.getCurrentSquare(), 
-                                            pieceCheckHolder.getCurrentSquare().getLocation().getFile(), 
-                                            pieceCheckHolder.getCurrentSquare().getLocation().getRank(), 
-                                            board);
-                        if (simulatedMoveCheckAssessment()){
-                            uselessMovesList.add(moveDestination);
-                        };
-
-                        AbstractPiece.rollBackCapturingMove(ownPiece);
-                        AbstractPiece.rollBackPieceRemovalFromBoard(pieceCheckHolder);
-                    }
-                    ownMoveList.removeAll(uselessMovesList);
-
-                    if (!ownMoveList.isEmpty()){
-                        checkResolvingMoves.put(ownPiece, ownMoveList);
-                    }
+                    moveCheckResolveSimulation(ownMoveList, ownPiece, pieceCheckHolder);
                 }
             }
         }
@@ -405,45 +411,7 @@ public class Game{
                 ownMoveList = ownMoveList.stream().filter((ownMove) -> {return pieceCheckHolder.getCurrentSquare().getLocation().equals(ownMove);}).collect(Collectors.toList());
                 
                 if (!ownMoveList.isEmpty()){
-                    List<AbstractPiece> darkPieces = board.getDarkPieces();
-                    List<AbstractPiece> lightPieces = board.getLightPieces();
-                    List<Location> uselessMovesList = new ArrayList<>();
-                    
-                    // get pieces according to color:
-                    darkPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
-                    lightPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
-
-                    // save current locations as "previous", since we're about to simulate moves and subsequently undo them again
-                    Location currentLocation = null;
-                    for (AbstractPiece darkPiece : darkPieces){
-                        currentLocation = darkPiece.getCurrentSquare().getLocation();
-                        previousDarkLocations.put(darkPiece, currentLocation);
-                    }
-                    for (AbstractPiece lightPiece : lightPieces){
-                        currentLocation = lightPiece.getCurrentSquare().getLocation();
-                        previousDarkLocations.put(lightPiece, currentLocation);
-                    }
-                    
-                    // simulate the move
-                    for (Location moveDestination : ownMoveList){
-                        AbstractPiece.simulatePieceRemovalFromBoard(pieceCheckHolder);
-                        AbstractPiece.simulateCapturingMove(ownPiece);
-                        ownPiece.makeMove(pieceCheckHolder.getCurrentSquare(), 
-                                            pieceCheckHolder.getCurrentSquare().getLocation().getFile(), 
-                                            pieceCheckHolder.getCurrentSquare().getLocation().getRank(), 
-                                            board);
-                        if (simulatedMoveCheckAssessment()){
-                            uselessMovesList.add(moveDestination);
-                        };
-
-                        AbstractPiece.rollBackCapturingMove(ownPiece);
-                        AbstractPiece.rollBackPieceRemovalFromBoard(pieceCheckHolder);
-                    }
-                    ownMoveList.removeAll(uselessMovesList);
-
-                    if (!ownMoveList.isEmpty()){
-                        checkResolvingMoves.put(ownPiece, ownMoveList);
-                    }
+                    moveCheckResolveSimulation(ownMoveList, ownPiece, pieceCheckHolder);
                 }
             }
         }
@@ -466,23 +434,51 @@ public class Game{
         if (!resolvingMovesList.isEmpty()){
             checkResolvingMoves.put(king, resolvingMovesList);
         }
-        resolvingMovesList = null;
+    }
 
-/*         boolean locked;
-        for (Location neighborLoc : kingNeighborLocations){
-            locked = false;
 
-            for (Location lockedLoc : lockedList){
-                if ((neighborLoc.getFile().ordinal() == lockedLoc.getFile().ordinal()) && (neighborLoc.getRank() == lockedLoc.getRank())){
-                    locked = true;
-                    break;
-                }
-            }
+    private static void moveCheckResolveSimulation(List<Location> ownMoveList, AbstractPiece ownPiece, AbstractPiece pieceCheckHolder){
+        // This function simulates the moves which could potentially resolve the check. 
 
-            if (!locked){
-                resolvingMovesList.add(neighborLoc);
-            }
+        List<AbstractPiece> darkPieces = board.getDarkPieces();
+        List<AbstractPiece> lightPieces = board.getLightPieces();
+        List<Location> uselessMovesList = new ArrayList<>();
+        
+        // get pieces according to color:
+        darkPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
+        lightPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
+
+        // save current locations as "previous", since we're about to simulate moves and subsequently undo them again
+        Location currentLocation = null;
+        for (AbstractPiece darkPiece : darkPieces){
+            currentLocation = darkPiece.getCurrentSquare().getLocation();
+            previousDarkLocations.put(darkPiece, currentLocation);
         }
-        checkResolvingMoves.put(king, resolvingMovesList); */
+        for (AbstractPiece lightPiece : lightPieces){
+            currentLocation = lightPiece.getCurrentSquare().getLocation();
+            previousDarkLocations.put(lightPiece, currentLocation);
+        }
+        
+        // simulate the move
+        for (Location moveDestination : ownMoveList){
+            AbstractPiece.simulatePieceRemovalFromBoard(pieceCheckHolder);
+            AbstractPiece.simulateCapturingMove(ownPiece);
+            ownPiece.makeMove(pieceCheckHolder.getCurrentSquare(), 
+                                pieceCheckHolder.getCurrentSquare().getLocation().getFile(), 
+                                pieceCheckHolder.getCurrentSquare().getLocation().getRank(), 
+                                board);
+            if (simulatedMoveCheckAssessment()){
+                uselessMovesList.add(moveDestination);
+            };
+
+            AbstractPiece.rollBackCapturingMove(ownPiece);
+            AbstractPiece.rollBackPieceRemovalFromBoard(pieceCheckHolder);
+        }
+        ownMoveList.removeAll(uselessMovesList);
+
+        if (!ownMoveList.isEmpty()){
+            checkResolvingMoves.put(ownPiece, ownMoveList);
+        }
+
     }
 }

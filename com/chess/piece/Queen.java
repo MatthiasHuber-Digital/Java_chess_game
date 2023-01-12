@@ -6,6 +6,18 @@ import com.chess.common.*;
 
 public class Queen extends AbstractPiece{
 
+    // FILE (A), then RANK(1)
+    int[][] offsets = {
+        {1, 0}, 
+        {-1, 0}, 
+        {0, 1}, 
+        {0, -1},
+        {1, 1}, 
+        {-1, -1}, 
+        {-1, 1}, 
+        {1, -1},
+    };
+
     public Queen(PieceColor pieceColor){
         super(pieceColor);
         this.name = "Queen";
@@ -17,18 +29,6 @@ public class Queen extends AbstractPiece{
         Map<Location, Square> squareMap = board.getLocationSquareMap();
         Location currentLocation = this.getCurrentSquare().getLocation();
         ArrayList<Location> moveCandidates = new ArrayList<>();
-
-        // FILE (A), then RANK(1)
-        int[][] offsets = {
-            {1, 0}, 
-            {-1, 0}, 
-            {0, 1}, 
-            {0, -1},
-            {1, 1}, 
-            {-1, -1}, 
-            {-1, 1}, 
-            {1, -1},
-        };
 
         moveCandidates = this.filterStraightMovesInBoard(offsets, currentLocation);
 
