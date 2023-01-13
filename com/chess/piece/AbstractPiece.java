@@ -14,6 +14,7 @@ public abstract class AbstractPiece implements Movable{
     protected PieceColor pieceColor;
     protected Square currentSquare;
     protected Square previousSquare;
+    protected static AbstractPiece capturedSimulationPiece = null;
     public boolean pieceHasBeenCaptured = false;
 
     public AbstractPiece(PieceColor pieceColor){
@@ -248,13 +249,40 @@ public abstract class AbstractPiece implements Movable{
         piece.previousSquare = null;
     }
 
-    public static void simulateCapturingMove(AbstractPiece piece){
+    public static void simulateMove(AbstractPiece piece, Location moveDestination, Board board){
         piece.previousSquare = piece.currentSquare;
+        if (board.locationSquareMap.get(moveDestination).getIsOccupied()){
+            capturedSimulationPiece = board.locationSquareMap.get(moveDestination).getCurrentPiece();
+            capturedSimulationPiece.setCurrentSquare(null);
+            capturedSimulationPiece.pieceHasBeenCaptured = true;
+        }
+        piece.currentSquare = board.locationSquareMap.get(moveDestination);
+        piece.currentSquare.setIsOccupied(true);
+        piece.currentSquare.setCurrentPiece(piece);
+
+        piece.previousSquare.setCurrentPiece(null);
+        piece.previousSquare.setIsOccupied(false);
     }
 
-    public static void rollBackCapturingMove(AbstractPiece piece){
+    public static void rollBackSimulatedMove(AbstractPiece piece){
+        if (capturedSimulationPiece==null){
+            piece.currentSquare.reset();
+        }
+        else{
+            // the DESTINATION has to be reset - the old piece to be placed there:
+            piece.currentSquare.setCurrentPiece(capturedSimulationPiece);
+            piece.currentSquare.setIsOccupied(true);
+            // the old piece's attributes need to be set correctly:
+            capturedSimulationPiece.setCurrentSquare(piece.currentSquare);
+            capturedSimulationPiece.pieceHasBeenCaptured = false;
+            capturedSimulationPiece=null;
+        }
+        // the moved piece's old coordinates have to be restored:
         piece.currentSquare = piece.previousSquare;
         piece.previousSquare = null;
+        // the old coordinate's attributes have to be restored:
+        piece.currentSquare.setCurrentPiece(piece);
+        piece.currentSquare.setIsOccupied(true);
     }
 
 }

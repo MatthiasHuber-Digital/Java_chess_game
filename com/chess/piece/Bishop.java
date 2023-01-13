@@ -73,7 +73,6 @@ public class Bishop extends AbstractPiece{
         Map<Location, Square> squareMap = board.getLocationSquareMap();
         Location currentLocation = this.getCurrentSquare().getLocation();
         ArrayList<Location> moveCandidates = new ArrayList<>();
-        ArrayList<Location> newMoveCandidates = new ArrayList<>();
 
         moveCandidates = this.filterStraightMovesInBoard(offsets, currentLocation);
 

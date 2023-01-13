@@ -73,8 +73,8 @@ public class Game{
                     }
                     
                     if (inputCoordinatesInChessboard(moveLine) && moveLine.length() == 4){
-                        String fromLoc = moveLine.substring(0,1);
-                        String toLoc = moveLine.substring(2,3);
+                        String fromLoc = moveLine.substring(0,2);
+                        String toLoc = moveLine.substring(2,4);
             
                         // we need the enum FILE from an integer value, that fom the string conversion of a character 
                         // that character is cast to upper case. 
@@ -235,6 +235,7 @@ public class Game{
 
     }
 
+    
     private static boolean isCheckResolvingMove(File fromFile, File toFile, int fromRank, int toRank){
 
         Square fromSquare = board.getLocationSquareMap().get(new Location(fromFile, fromRank));
@@ -247,16 +248,19 @@ public class Game{
         return !pieceDestinations.isEmpty();
     }
 
+
     private static boolean inputCoordinatesInChessboard(String line){
         return line.matches("[a-hA-H]+[1-8]+[a-hA-H]+[1-8]");
     }
+
 
     private static boolean validGameModeChoiceInput(String line){
         return line.matches("[aAmM]");
     }
 
+
     private static void checkForCheckedKing(Board board){
-        AbstractPiece king;
+        
         if (turnOfColor==PieceColor.LIGHT){
             king = board.lightKing;
         }else{
@@ -300,6 +304,7 @@ public class Game{
         }
     }
 
+
     private static Map<AbstractPiece, List<Location>> possibleColorPieceMoves(Board board, PieceColor color){
         List<AbstractPiece> piecesOfCertainColor = new ArrayList<>();
         Map<AbstractPiece, List<Location>> possibleColorPieceMoves = new HashMap<>();
@@ -322,6 +327,7 @@ public class Game{
         return possibleColorPieceMoves;
     }
 
+
     private static void checkForCheckmate(){
         /* This function covers the following checkmate requirements:
          * 1. King will be in check no matter to which field he moves
@@ -342,10 +348,182 @@ public class Game{
         // Then, go through all friendly pieces except for the king, and simulate shielding the king from the threat
         // ... check if the king will be still in check under these conditions
         // ...all moves removing the check need to be added to the resolving-check move candidates.
-
+        addResolvingMovesShielding();
     }
     
+     
+    private static List<Location> filterCheckLine(AbstractPiece pieceCheckHolder){
+        // This function compiles the valid move destinations of a CHECKHOLDER enemy piece towards the KING which it is keeping in check.
+        
+        List<Location> listCheckLine = new ArrayList<>();
+        int checkHolderFileOrdinal = pieceCheckHolder.getCurrentSquare().getLocation().getFile().ordinal();
+        int checkHolderRank = pieceCheckHolder.getCurrentSquare().getLocation().getRank();
+
+        int kingFileOrdinal = king.getCurrentSquare().getLocation().getFile().ordinal();
+        int kingRank = king.getCurrentSquare().getLocation().getRank();
+
+        int deltaFile = checkHolderFileOrdinal - kingFileOrdinal;
+        int deltaRank = checkHolderRank - kingRank;
+
+        int stepFile;
+        if (deltaFile == 0){
+            stepFile = 0;
+        }else{
+            if (deltaFile > 0){
+                stepFile = 1;
+            }
+            else{ //deltaFile<0
+                stepFile = -1;
+            }
+        }
+        
+        
+        int stepRank;
+        if (deltaRank == 0){
+            stepRank = 0;
+        }else{
+            if (deltaRank > 0){
+                stepRank = 1;
+            }
+            else{ //deltaRank<0
+                stepRank = -1;
+            }
+        }
+
+        //int iterFileOrdinal;
+        //int iterRank;
+        List<Location> tempList = new ArrayList<>();
+        for (int locMultiplier=1; (Math.abs(locMultiplier * stepFile) < Math.abs(deltaFile)) && (Math.abs(locMultiplier * stepRank) < Math.abs(deltaRank)); locMultiplier++){
+            //iterFileOrdinal = kingFileOrdinal + (locMultiplier * stepFile);
+            //iterRank = kingRank + (locMultiplier * stepRank);
+            listCheckLine.add(LocationFactory.buildLocation(king.getCurrentSquare().getLocation(), (locMultiplier * stepFile), (locMultiplier * stepRank)));
+        }
+        
+        listCheckLine = listCheckLine.stream().filter(possibleEnemyPieceMoves.get(pieceCheckHolder)::contains).collect(Collectors.toList());
+
+        return listCheckLine;
+    }
+    
+    
+    private static void addResolvingMovesShielding(){
+        // This function adds (to the list of check resolving moves) all effective moves which shield the king from the piece(s) keeping the king in check.
+
+        // Go through all pieces keeping the king in check (enemy pieces) except for the king
+        // Check if there's a move of a current player's piece which could shield the king from ALL pieces exerting the check
+        // ...simulate capturing that figure and if the current player's king would be still in check then
+        // ...all moves removing the check need to be added to the resolving-check move candidates.
+        List<AbstractPiece> longRangeCheckHolders = enemyCheckHolders.stream().filter(holder -> (holder instanceof Queen) || (holder instanceof Bishop) ||(holder instanceof Rook)).collect(Collectors.toList());
+
+        
+        for (AbstractPiece pieceCheckHolder : longRangeCheckHolders){
+            
+            // get the connection line of squares between the check holder and the own king
+            // all locations of the connection line should be assessed
+            List<Location> checkHolderCheckLine = filterCheckLine(pieceCheckHolder);
+
+            for (AbstractPiece ownPiece : possibleOwnPieceMoves.keySet()){
+                if (!ownPiece.getName().equalsIgnoreCase("king")){
+                    List<Location> ownMoveList = possibleOwnPieceMoves.get(ownPiece);
+                    ownMoveList = ownMoveList.stream().filter(checkHolderCheckLine::contains).collect(Collectors.toList());
+                    
+                    if (!ownMoveList.isEmpty()){
+                        moveCheckResolveSimulation(ownMoveList, ownPiece, pieceCheckHolder);
+                    }
+                }
+            }
+        }
+    }
+    
+    
+    private static void addResolvingMovesCapturing(){
+        // This function adds (to the list of check resolving moves) all effective check resolving moves which capture the piece keeping the king in check.
+
+        // Go through all pieces keeping the king in check (enemy pieces) except for the king
+        // Check if there's a move of a current player's piece which could capture that figure
+        // ...simulate capturing that figure and if the current player's king would be still in check then
+        // ...all moves removing the check need to be added to the resolving-check move candidates.
+        for (AbstractPiece pieceCheckHolder : enemyCheckHolders){
+            
+            for (AbstractPiece ownPiece : possibleOwnPieceMoves.keySet()){
+                if (!ownPiece.getName().equalsIgnoreCase("king")){
+                    List<Location> ownMoveList = possibleOwnPieceMoves.get(ownPiece);
+                    ownMoveList = ownMoveList.stream().filter((ownMove) -> {return pieceCheckHolder.getCurrentSquare().getLocation().equals(ownMove);}).collect(Collectors.toList());
+                    
+                    if (!ownMoveList.isEmpty()){
+                        moveCheckResolveSimulation(ownMoveList, ownPiece, pieceCheckHolder);
+                    }
+                }
+            }
+        }
+    }
+
+    
+    private static void addResolvingMovesKing(){
+        // This function adds all the king's potential moves to the hashmap which contains the check-resolving moves.
+        
+        List<Location> lockedList = new ArrayList<>();
+        List<Location> resolvingMovesList = new ArrayList<>();
+        
+        // check if ALL king's neighboring locations are locked:
+        // ...all non-locked positions need to be added to the resolving-check move candidates.
+        lockedList = checkLockedLocationsMap.values().stream().distinct().flatMap(l -> l.stream()).collect(Collectors.toList()); // get all unique locked neighboring positions
+        
+        resolvingMovesList.addAll(kingNeighborLocations);
+        resolvingMovesList.removeAll(lockedList);
+
+        if (!resolvingMovesList.isEmpty()){
+            checkResolvingMoves.put(king, resolvingMovesList);
+        }
+    }
+    
+
+    private static void moveCheckResolveSimulation(List<Location> ownMoveList, AbstractPiece ownPiece, AbstractPiece pieceCheckHolder){
+        // This function simulates the moves which could potentially resolve the check. 
+
+        List<AbstractPiece> darkPieces = board.getDarkPieces();
+        List<AbstractPiece> lightPieces = board.getLightPieces();
+        List<Location> uselessMovesList = new ArrayList<>();
+        
+        // get pieces according to color:
+        darkPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
+        lightPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
+        
+        // save current locations as "previous", since we're about to simulate moves and subsequently undo them again
+        Location currentLocation = null;
+        for (AbstractPiece darkPiece : darkPieces){
+            currentLocation = darkPiece.getCurrentSquare().getLocation();
+            previousDarkLocations.put(darkPiece, currentLocation);
+        }
+        for (AbstractPiece lightPiece : lightPieces){
+            currentLocation = lightPiece.getCurrentSquare().getLocation();
+            previousDarkLocations.put(lightPiece, currentLocation);
+        }
+        
+        // simulate the move
+        for (Location moveDestination : ownMoveList){
+            //AbstractPiece.simulatePieceRemovalFromBoard(pieceCheckHolder);
+            AbstractPiece.simulateMove(ownPiece, moveDestination, board);
+            //ownPiece.makeMove(board.locationSquareMap.get(moveDestination), 
+            //                    moveDestination.getFile(), moveDestination.getRank(), 
+            //                    board);
+            if (simulatedMoveCheckAssessment()){
+                uselessMovesList.add(moveDestination);
+            };
+            
+            AbstractPiece.rollBackSimulatedMove(ownPiece);
+            //AbstractPiece.rollBackPieceRemovalFromBoard(pieceCheckHolder);
+        }
+        ownMoveList.removeAll(uselessMovesList);
+
+        if (!ownMoveList.isEmpty()){
+            checkResolvingMoves.put(ownPiece, ownMoveList);
+        }
+        
+    }
+
+
     private static boolean simulatedMoveCheckAssessment(){
+        // This function assesses if there's a check situation still given after the simulated move has been conducted.
 
         Map<AbstractPiece, List<Location>> possibleEnemySimulationPieceMoves = new HashMap<>();
         if (turnOfColor.equals(PieceColor.DARK)){
@@ -370,160 +548,4 @@ public class Game{
 
         return isSimulatedCheck;
     } 
-
-
-    private static List<Location> filterCheckLine(AbstractPiece pieceCheckHolder){
-        // This function compiles the valid move destinations of a CHECKHOLDER enemy piece towards the KING which it is keeping in check.
-
-        List<Location> listCheckLine = new ArrayList<>();
-        int checkHolderFileOrdinal = pieceCheckHolder.getCurrentSquare().getLocation().getFile().ordinal();
-        int checkHolderRank = pieceCheckHolder.getCurrentSquare().getLocation().getRank();
-
-        int kingFileOrdinal = king.getCurrentSquare().getLocation().getFile().ordinal();
-        int kingRank = king.getCurrentSquare().getLocation().getRank();
-
-        int deltaFile = checkHolderFileOrdinal - kingFileOrdinal;
-        int deltaRank = checkHolderRank - kingRank;
-
-        int stepFile;
-        if (deltaFile==0){
-            stepFile=0;
-        }else{
-            stepFile=1;
-        }
-
-        int stepRank;
-        if (deltaRank==0){
-            stepRank=0;
-        }else{
-            stepRank=1;
-        }
-
-        //int iterFileOrdinal;
-        //int iterRank;
-        List<Location> tempList = new ArrayList<>();
-        for (int locMultiplier=1; ((locMultiplier * stepFile) < deltaFile) && ((locMultiplier * stepRank) < deltaRank); locMultiplier++){
-            //iterFileOrdinal = kingFileOrdinal + (locMultiplier * stepFile);
-            //iterRank = kingRank + (locMultiplier * stepRank);
-            listCheckLine.add(LocationFactory.buildLocation(king.getCurrentSquare().getLocation(), (locMultiplier * stepFile), (locMultiplier * stepRank)));
-        }
-
-        listCheckLine = listCheckLine.stream().filter(possibleEnemyPieceMoves.get(pieceCheckHolder)::contains).collect(Collectors.toList());
-
-        return listCheckLine;
-    }
-
-
-    private static void addResolvingMovesShielding(){
-
-        // Go through all pieces keeping the king in check (enemy pieces) except for the king
-        // Check if there's a move of a current player's piece which could shield the king from ALL pieces exerting the check
-        // ...simulate capturing that figure and if the current player's king would be still in check then
-        // ...all moves removing the check need to be added to the resolving-check move candidates.
-        List<AbstractPiece> longRangeCheckHolders = enemyCheckHolders.stream().filter(holder -> (holder instanceof Queen) || (holder instanceof Bishop) ||(holder instanceof Rook)).collect(Collectors.toList());
-
-        
-        for (AbstractPiece pieceCheckHolder : longRangeCheckHolders){
-            
-            // get the connection line of squares between the check holder and the own king
-            // all locations of the connection line should be assessed
-            List<Location> checkHolderCheckLine = filterCheckLine(pieceCheckHolder);
-
-            for (AbstractPiece ownPiece : possibleOwnPieceMoves.keySet()){
-                
-                List<Location> ownMoveList = possibleOwnPieceMoves.get(ownPiece);
-                ownMoveList = ownMoveList.stream().filter(checkHolderCheckLine::contains).collect(Collectors.toList());
-                
-                if (!ownMoveList.isEmpty()){
-                    moveCheckResolveSimulation(ownMoveList, ownPiece, pieceCheckHolder);
-                }
-            }
-        }
-    }
-
-
-    private static void addResolvingMovesCapturing(){
-
-        // Go through all pieces keeping the king in check (enemy pieces) except for the king
-        // Check if there's a move of a current player's piece which could capture that figure
-        // ...simulate capturing that figure and if the current player's king would be still in check then
-        // ...all moves removing the check need to be added to the resolving-check move candidates.
-        for (AbstractPiece pieceCheckHolder : enemyCheckHolders){
-            
-            for (AbstractPiece ownPiece : possibleOwnPieceMoves.keySet()){
-                
-                List<Location> ownMoveList = possibleOwnPieceMoves.get(ownPiece);
-                ownMoveList = ownMoveList.stream().filter((ownMove) -> {return pieceCheckHolder.getCurrentSquare().getLocation().equals(ownMove);}).collect(Collectors.toList());
-                
-                if (!ownMoveList.isEmpty()){
-                    moveCheckResolveSimulation(ownMoveList, ownPiece, pieceCheckHolder);
-                }
-            }
-        }
-    }
-
-
-    private static void addResolvingMovesKing(){
-        // This function adds all the king's potential moves to the hashmap which contains the check-resolving moves.
-
-        List<Location> lockedList = new ArrayList<>();
-        List<Location> resolvingMovesList = new ArrayList<>();
-
-        // check if ALL king's neighboring locations are locked:
-        // ...all non-locked positions need to be added to the resolving-check move candidates.
-        lockedList = checkLockedLocationsMap.values().stream().distinct().flatMap(l -> l.stream()).collect(Collectors.toList()); // get all unique locked neighboring positions
-
-        resolvingMovesList.addAll(kingNeighborLocations);
-        resolvingMovesList.removeAll(lockedList);
-
-        if (!resolvingMovesList.isEmpty()){
-            checkResolvingMoves.put(king, resolvingMovesList);
-        }
-    }
-
-
-    private static void moveCheckResolveSimulation(List<Location> ownMoveList, AbstractPiece ownPiece, AbstractPiece pieceCheckHolder){
-        // This function simulates the moves which could potentially resolve the check. 
-
-        List<AbstractPiece> darkPieces = board.getDarkPieces();
-        List<AbstractPiece> lightPieces = board.getLightPieces();
-        List<Location> uselessMovesList = new ArrayList<>();
-        
-        // get pieces according to color:
-        darkPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
-        lightPieces.stream().filter((candidate) -> {return(!candidate.pieceHasBeenCaptured);}).collect(Collectors.toList());
-
-        // save current locations as "previous", since we're about to simulate moves and subsequently undo them again
-        Location currentLocation = null;
-        for (AbstractPiece darkPiece : darkPieces){
-            currentLocation = darkPiece.getCurrentSquare().getLocation();
-            previousDarkLocations.put(darkPiece, currentLocation);
-        }
-        for (AbstractPiece lightPiece : lightPieces){
-            currentLocation = lightPiece.getCurrentSquare().getLocation();
-            previousDarkLocations.put(lightPiece, currentLocation);
-        }
-        
-        // simulate the move
-        for (Location moveDestination : ownMoveList){
-            AbstractPiece.simulatePieceRemovalFromBoard(pieceCheckHolder);
-            AbstractPiece.simulateCapturingMove(ownPiece);
-            ownPiece.makeMove(pieceCheckHolder.getCurrentSquare(), 
-                                pieceCheckHolder.getCurrentSquare().getLocation().getFile(), 
-                                pieceCheckHolder.getCurrentSquare().getLocation().getRank(), 
-                                board);
-            if (simulatedMoveCheckAssessment()){
-                uselessMovesList.add(moveDestination);
-            };
-
-            AbstractPiece.rollBackCapturingMove(ownPiece);
-            AbstractPiece.rollBackPieceRemovalFromBoard(pieceCheckHolder);
-        }
-        ownMoveList.removeAll(uselessMovesList);
-
-        if (!ownMoveList.isEmpty()){
-            checkResolvingMoves.put(ownPiece, ownMoveList);
-        }
-
-    }
 }
