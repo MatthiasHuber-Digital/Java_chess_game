@@ -13,7 +13,7 @@ public class Board {
     private static final int BOARD_LENGTH = 8;
     // Location contains the coordinates
     // Square contains the info if is occupied or not
-    public final Map<Location, Square> locationSquareMap;
+    public final Map<Location, Square> locationSquareMap = new HashMap<>();
 
     // boardSquares is for assigning colors to each square for later graphical
     // dispay:
@@ -27,7 +27,7 @@ public class Board {
 
     public Board() {
         // map zipping together the squares and location coordinates
-        locationSquareMap = new HashMap<>();
+        //locationSquareMap = new HashMap<>();
 
         // Mapping of pieces to their locations:
         Map<Location, AbstractPiece> pieces = PieceFactory.getPieces();
