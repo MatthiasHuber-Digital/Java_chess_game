@@ -1,5 +1,6 @@
 package com.chess.runner;
 
+import com.chess.game.*;
 import com.chess.board.*;
 import com.chess.common.*;
 import com.chess.piece.*;
@@ -26,31 +27,64 @@ public class Game{
     private static Map<AbstractPiece, Location> previousDarkLocations = new HashMap<>();
     private static AbstractPiece king;
     private static Board board = new Board();
+    private static GameDetails gameDetails;
+    private static GameMode gameMode;
 
     public static void main(String[] args){
-        board.printBoard();
 
+        System.out.println("+ + +   JAVA-CHESS by Matthias Huber   + + +");
+        System.out.println("partially based on the YT-tutorials of Gerard Taylor (https://www.youtube.com/watch?v=xaJxBsxqkyM)");
+        
+        while (true){
+            System.out.println("\nMode: Manual (M) or Auto (A)?");
+            String inputManualOrAutoPlay = input_scan.nextLine();
+            if (validGameModeChoiceInput(inputManualOrAutoPlay)){
+                if (inputManualOrAutoPlay.equalsIgnoreCase("a")){
+                    gameMode = GameMode.AUTO;
+                    gameDetails.splitAutoGameStringInMoves();
+                }
+                else{
+                    gameMode = GameMode.MANUAL;
+                }
+                break;
+            }
+            else{
+                System.out.println("Invalid input. Please enter m/M or a/A.");
+            }
+        }
+
+
+        board.printBoard();
         try {
             
             while(!isCheckMate){
                 
+                System.out.println("\n");
                 if (isCheck){
                     System.out.println(String.format("%s player - your king is in check.", turnOfColor));
                     System.out.println(String.format("%s player - enter move:", turnOfColor));
-                    String moveLine = input_scan.nextLine();
+                    String moveLine;
+                    if (gameMode == GameMode.MANUAL){
+                        moveLine = input_scan.nextLine();
+                    }
+                    else{
+                        moveLine = gameDetails.getAutoMove();
+                        System.out.println("...auto-player: " + moveLine);
+                    }
                     
-                    if (inputCoordinatesInChessboard(moveLine)){
-                        String[] fromTo = moveLine.split("-");
+                    if (inputCoordinatesInChessboard(moveLine) && moveLine.length() == 4){
+                        String fromLoc = moveLine.substring(0,1);
+                        String toLoc = moveLine.substring(2,3);
             
                         // we need the enum FILE from an integer value, that fom the string conversion of a character 
                         // that character is cast to upper case. 
                         // the character is the first character of the "origin"
-                        File fromFile = File.valueOf(String.valueOf(Character.toUpperCase(fromTo[0].charAt(0))));
-                        int fromRank = Integer.parseInt(String.valueOf(fromTo[0].charAt(1)));
+                        File fromFile = File.valueOf(String.valueOf(Character.toUpperCase(fromLoc.charAt(0))));
+                        int fromRank = Integer.parseInt(String.valueOf(fromLoc.charAt(1)));
                         
                         // we proceed similarly for the destination:
-                        File toFile = File.valueOf(String.valueOf(Character.toUpperCase(fromTo[1].charAt(0))));
-                        int toRank = Integer.parseInt(String.valueOf(fromTo[1].charAt(1)));
+                        File toFile = File.valueOf(String.valueOf(Character.toUpperCase(toLoc.charAt(0))));
+                        int toRank = Integer.parseInt(String.valueOf(toLoc.charAt(1)));
                         
                         Square fromSquare = board.getLocationSquareMap().get(new Location(fromFile, fromRank));
                         Square toSquare = board.getLocationSquareMap().get(new Location(toFile, toRank));
@@ -88,20 +122,28 @@ public class Game{
                 else{
                     
                     System.out.println(String.format("%s player - enter move:", turnOfColor));
-                    String moveLine = input_scan.nextLine();
+                    String moveLine;
+                    if (gameMode == GameMode.MANUAL){
+                        moveLine = input_scan.nextLine();
+                    }
+                    else{
+                        moveLine = gameDetails.getAutoMove();
+                        System.out.println("...auto-player: " + moveLine);
+                    }
 
-                    if (inputCoordinatesInChessboard(moveLine)){
-                        String[] fromTo = moveLine.split("-");
+                    if (inputCoordinatesInChessboard(moveLine) && moveLine.length() == 4){
+                        String fromLoc = moveLine.substring(0,2);
+                        String toLoc = moveLine.substring(2,4);
             
                         // we need the enum FILE from an integer value, that fom the string conversion of a character 
                         // that character is cast to upper case. 
                         // the character is the first character of the "origin"
-                        File fromFile = File.valueOf(String.valueOf(Character.toUpperCase(fromTo[0].charAt(0))));
-                        int fromRank = Integer.parseInt(String.valueOf(fromTo[0].charAt(1)));
+                        File fromFile = File.valueOf(String.valueOf(Character.toUpperCase(fromLoc.charAt(0))));
+                        int fromRank = Integer.parseInt(String.valueOf(fromLoc.charAt(1)));
                         
                         // we proceed similarly for the destination:
-                        File toFile = File.valueOf(String.valueOf(Character.toUpperCase(fromTo[1].charAt(0))));
-                        int toRank = Integer.parseInt(String.valueOf(fromTo[1].charAt(1)));
+                        File toFile = File.valueOf(String.valueOf(Character.toUpperCase(toLoc.charAt(0))));
+                        int toRank = Integer.parseInt(String.valueOf(toLoc.charAt(1)));
 
                         try{
                             movePieceIfPermitted(fromFile, toFile, fromRank, toRank, board);
@@ -206,7 +248,11 @@ public class Game{
     }
 
     private static boolean inputCoordinatesInChessboard(String line){
-        return line.matches("[a-hA-H]+[1-8]+['-]+[a-hA-H]+[1-8]");
+        return line.matches("[a-hA-H]+[1-8]+[a-hA-H]+[1-8]");
+    }
+
+    private static boolean validGameModeChoiceInput(String line){
+        return line.matches("[aAmM]");
     }
 
     private static void checkForCheckedKing(Board board){
@@ -283,7 +329,6 @@ public class Game{
          * 3. No piece can capture the piece(s) keeping the king in check
          * Prerequisite: king is in check
          */
-        isCheckMate = true;
 
         // retain all king's moves which could resolve the check
         addResolvingMovesKing();
