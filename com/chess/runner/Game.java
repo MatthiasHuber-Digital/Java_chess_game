@@ -5,6 +5,7 @@ import com.chess.board.*;
 import com.chess.common.*;
 import com.chess.piece.*;
 import com.chess.squares.*;
+import com.chess.gui.*;
 
 import java.util.stream.Collectors;
 import java.text.Format;
@@ -31,6 +32,8 @@ public class Game{
     private static GameMode gameMode;
 
     public static void main(String[] args){
+
+        Table table = new Table(board);
 
         System.out.println("+ + +   JAVA-CHESS by Matthias Huber   + + +");
         System.out.println("partially based on the YT-tutorials of Gerard Taylor (https://www.youtube.com/watch?v=xaJxBsxqkyM)");
