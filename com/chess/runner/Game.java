@@ -35,8 +35,9 @@ public class Game{
 
         Table table = new Table(board);
 
-        System.out.println("+ + +   JAVA-CHESS by Matthias Huber   + + +");
+        System.out.println("+ + +   GREEN-Chess by Matthias Huber   + + +");
         System.out.println("partially based on the YT-tutorials of Gerard Taylor (https://www.youtube.com/watch?v=xaJxBsxqkyM)");
+        System.out.println("partially based on the YT-tutorials of amir650 (https://github.com/amir650/BlackWidow-Chess).")
         
         while (true){
             System.out.println("\nMode: Manual (M) or Auto (A)?");

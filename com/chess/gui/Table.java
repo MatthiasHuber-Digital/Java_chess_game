@@ -35,6 +35,15 @@ public class Table {
     private static final Dimension TILE_PANEL_DIMENSION = new Dimension(10,10);
     private static final int NUM_TILES = 64;
     private static final String PIECE_IMAGES_PATH = new java.io.File("").getAbsolutePath() + "\\com\\chess\\gui\\img\\";
+    // sand-color:
+    //private static final Color LIGHT_TILE_COLOR = new Color(240,230,140);
+    // white:
+    private static final Color LIGHT_TILE_COLOR = new Color(255,255,255);
+    //Color darkColor = new Color(210,105,30);
+    // brown:
+    //private static final Color DARK_TILE_COLOR = new Color(160,82,45); 
+    // mint-green:
+    private static final Color DARK_TILE_COLOR = new Color(153,255,153);
 
     public Table(Board board){
         // Window object creation
@@ -122,12 +131,13 @@ public class Table {
 
         
         private void assignTilePieceIcon(final Board board){
-            this.removeAll(); // clear ENTIRE TABLE in order to redraw
+            this.removeAll(); // clear tile
             Square currentSquare = board.getSquareFromTileId(this.tileId);
             if (currentSquare.getIsOccupied()){
                 try{
                     // access a piece icon data file e.g. like this: C:/<somedir>/LIGHT_bishop.gif
                     String imgPath = PIECE_IMAGES_PATH + currentSquare.getCurrentPiece().getPieceColor().toString() + "_" + currentSquare.getCurrentPiece().getName() + ".gif";
+                    System.out.println("IMAGE PATH: " + imgPath);
                     final BufferedImage image = ImageIO.read(new java.io.File(imgPath));
                     add(new JLabel(new ImageIcon(image)));
                 }
@@ -139,18 +149,15 @@ public class Table {
 
 
         private void assignTileColor(){
-            Color lightColor = new Color(240,230,140);
-            //Color darkColor = new Color(210,105,30);
-            Color darkColor = new Color(160,82,45);
 
             if ((tileId>=8) && (tileId<=15) ||
                 (tileId>=24) && (tileId<=31) ||
                 (tileId>=40) && (tileId<=47) ||
                 (tileId>=56) && (tileId<=63)
             ){
-                setBackground(this.tileId % 2 == 0 ? lightColor : darkColor);
+                setBackground(this.tileId % 2 == 0 ? LIGHT_TILE_COLOR : DARK_TILE_COLOR);
             } else {
-                setBackground(this.tileId % 2 != 0 ? lightColor : darkColor);
+                setBackground(this.tileId % 2 != 0 ? LIGHT_TILE_COLOR : DARK_TILE_COLOR);
             }
         }
     }
