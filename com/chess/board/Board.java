@@ -70,6 +70,7 @@ public final class Board {
         return locationSquareMap;
     }
 
+    // tiles are the graphical representation of the squares
     public static Square getSquareFromTileId(int tileId){
         return boardSquares[tileId / 8][tileId % 8];
     }

@@ -2,18 +2,23 @@ package com.chess.gui;
 
 import com.chess.board.*;
 import com.chess.squares.*;
+import com.chess.piece.*;
+import com.chess.runner.*;
 
 import javax.lang.model.util.ElementScanner6;
 import javax.imageio.*;
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
+//import java.awt.event.ActionEvent;
+//import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.IOException;
 import java.io.File;
 import java.util.ArrayList;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import javax.swing.SwingUtilities.*;
 
 public class Table {
     // This class is for the MAIN WINDOW and MENU CREATION
@@ -29,6 +34,10 @@ public class Table {
     private final JFrame gameFrame; // visualization background, i.e. window
     private final BoardPanel boardPanel; // visual component for the board
     private final Board chessboard;
+
+    private Square sourceSquare;
+    private Square destinationSquare;
+    private AbstractPiece humanMovedPiece;
 
     private static final Dimension OUTER_FRAME_DIMENSION = new Dimension(600,600);
     private static final Dimension BOARD_PANEL_DIMENSION = new Dimension(400,350);
@@ -113,10 +122,20 @@ public class Table {
             setPreferredSize(BOARD_PANEL_DIMENSION);
             validate();
         }
+    
+        public void drawBoard(final Board board){
+            removeAll();
+            for (final TilePanel tilePanel : boardTiles){
+                tilePanel.drawTile(board);
+                add(tilePanel);
+            }
+            validate();
+            repaint();
+        }
     }
 
 
-    private class TilePanel extends JPanel{
+    private class TilePanel extends JPanel implements MouseListener{
         // This is the cell/tile graphical area
         private final int tileId;
 
@@ -126,10 +145,88 @@ public class Table {
             setPreferredSize(TILE_PANEL_DIMENSION);
             assignTileColor();
             assignTilePieceIcon(chessboard);
-            validate();
+            addMouseListener(this);
+            
+
+        }
+        
+        @Override
+        public void mouseClicked(MouseEvent e){
+
+            // only kick-off the code in case there is no move currently being processed by the backend.
+            if (!Game.getProcessingMove()){
+
+                if (javax.swing.SwingUtilities.isRightMouseButton(e)){
+                    clearMouseListenerFields();
+
+                }
+                else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+                    // on right-click, ANY PIECE SELECTIONS ARE CANCELLED.
+                    if (sourceSquare == null){
+                        // in the past, no square has been selected
+                        sourceSquare = chessboard.getSquareFromTileId(tileId);
+                        humanMovedPiece = sourceSquare.getCurrentPiece();
+                        if (humanMovedPiece == null || humanMovedPiece.getPieceColor().equals(Game.getTurnColor())){
+                            // in case there is no piece on the current square
+                            sourceSquare = null;
+                        }
+                    }
+                    else{
+                        // once a source square has been already selected
+                        destinationSquare = chessboard.getSquareFromTileId(tileId);
+                        // MAKE THE MOVE HERE
+
+                        // UPDATE chessboard
+                        if (!Game.getProcessingMove()){
+                            // screen update
+                        }
+                        // clear mouse listener fields
+                        clearMouseListenerFields();
+                    }
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run(){
+                            boardPanel.drawBoard(chessboard);
+                        }
+                    });
+                }
+            }
         }
 
-        
+        @Override
+        public void mousePressed(MouseEvent e){
+            
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e){
+            
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e){
+            
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        private void clearMouseListenerFields(){
+            sourceSquare = null;
+            destinationSquare = null;
+            humanMovedPiece = null;
+        }
+
+        public void drawTile(final Board board){
+            assignTileColor();
+            assignTilePieceIcon(board);
+            validate();
+            repaint();
+        }
+
         private void assignTilePieceIcon(final Board board){
             this.removeAll(); // clear tile
             Square currentSquare = board.getSquareFromTileId(this.tileId);
@@ -137,7 +234,6 @@ public class Table {
                 try{
                     // access a piece icon data file e.g. like this: C:/<somedir>/LIGHT_bishop.gif
                     String imgPath = PIECE_IMAGES_PATH + currentSquare.getCurrentPiece().getPieceColor().toString() + "_" + currentSquare.getCurrentPiece().getName() + ".gif";
-                    System.out.println("IMAGE PATH: " + imgPath);
                     final BufferedImage image = ImageIO.read(new java.io.File(imgPath));
                     add(new JLabel(new ImageIcon(image)));
                 }
@@ -146,7 +242,6 @@ public class Table {
                 }
             }
         }
-
 
         private void assignTileColor(){
 
