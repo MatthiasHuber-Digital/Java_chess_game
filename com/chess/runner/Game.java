@@ -5,6 +5,7 @@ import com.chess.board.*;
 import com.chess.common.*;
 import com.chess.piece.*;
 import com.chess.squares.*;
+import com.chess.gui.*;
 
 import java.util.stream.Collectors;
 import java.text.Format;
@@ -29,30 +30,103 @@ public class Game{
     private static Board board = new Board();
     private static GameDetails gameDetails;
     private static GameMode gameMode;
+    private static boolean processingMove = false;
+
+    private static File fromFile, toFile;
+    private static int fromRank, toRank;
 
     public static void main(String[] args){
 
-        System.out.println("+ + +   JAVA-CHESS by Matthias Huber   + + +");
+        System.out.println("+ + +   GREEN-Chess by Matthias Huber   + + +");
         System.out.println("partially based on the YT-tutorials of Gerard Taylor (https://www.youtube.com/watch?v=xaJxBsxqkyM)");
-        
-        while (true){
-            System.out.println("\nMode: Manual (M) or Auto (A)?");
-            String inputManualOrAutoPlay = input_scan.nextLine();
-            if (validGameModeChoiceInput(inputManualOrAutoPlay)){
-                if (inputManualOrAutoPlay.equalsIgnoreCase("a")){
-                    gameMode = GameMode.AUTO;
-                    gameDetails.splitAutoGameStringInMoves();
+        System.out.println("partially based on the YT-tutorials of amir650 (https://github.com/amir650/BlackWidow-Chess).");
+
+        Table table = new Table(board);
+
+    }
+
+    public static void setUserMoveCoordsFromMouse(Square fromSquare, Square toSquare){
+        // Receives the mouse-click based move coordinates and saves them to the corresponding ranks and files.
+
+        fromFile = fromSquare.getLocation().getFile();
+        fromRank = fromSquare.getLocation().getRank();
+
+        toFile = toSquare.getLocation().getFile();
+        toRank = toSquare.getLocation().getRank();
+    }
+
+    private static void checkBasedTurnHandling(){
+
+        if (isCheckResolvingMove(fromFile, toFile, fromRank, toRank)){
+                    
+            try{
+                movePieceIfPermitted(fromFile, toFile, fromRank, toRank, board);
+
+                // switching the player happens here in order to evaluate check and checkmate BEFORE the turn of the player
+                turnOfColor = turnOfColor.next();
+                checkForCheckedKing(board);
+
+                if(isCheck){
+                    checkForCheckmate();
+                    if (checkResolvingMoves.isEmpty()){
+                        isCheckMate = true;
+                        matchWinner = turnOfColor.next();
+                    }
                 }
-                else{
-                    gameMode = GameMode.MANUAL;
-                }
-                break;
             }
-            else{
-                System.out.println("Invalid input. Please enter m/M or a/A.");
+            catch (InvalidMoveException i){
+                System.out.println(i);
             }
+
+        } 
+        else{
+            System.out.println("The move you entered does not resolve the check. Please try again.");
         }
 
+    }
+
+    private static void normalTurnHandling(){
+        try{
+            movePieceIfPermitted(fromFile, toFile, fromRank, toRank, board);
+                        
+            // switching the player happens here in order to evaluate check and checkmate BEFORE the turn of the player
+            turnOfColor = turnOfColor.next();
+            checkForCheckedKing(board);
+
+            if(isCheck){
+                checkForCheckmate();
+                if (checkResolvingMoves.isEmpty()){
+                    isCheckMate = true;
+                    matchWinner = turnOfColor.next();
+                }
+            }
+        }
+        catch (InvalidMoveException i){
+            System.out.println(i);
+        }
+    }
+
+    public static void gameTurnHandling(){
+        try {
+            if (isCheck){
+                checkBasedTurnHandling();
+            }
+            else{
+                normalTurnHandling();
+            }
+        } catch (UnsupportedOperationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        if (isCheckMate){
+            System.out.println(String.format("CHECKMATE: The %s player won the match.", matchWinner));
+        }
+    }
+
+    private static void runCommandLineGame_obsolete(){
+        // This is the outdated method which was used in the past in order to run CLI-based chess.
+        // It was replaced by the graphical-interface based chess game.
 
         board.printBoard();
         try {
@@ -180,6 +254,7 @@ public class Game{
         }
 
     }
+
 
     private static void movePieceIfPermitted (File fromFile, File toFile, int fromRank, int toRank, Board board) 
                                             throws InvalidMoveException{
@@ -548,4 +623,14 @@ public class Game{
 
         return isSimulatedCheck;
     } 
+
+
+    public static PieceColor getTurnColor(){
+        return turnOfColor;
+    }
+
+
+    public static boolean getProcessingMove(){
+        return processingMove;
+    }
 }

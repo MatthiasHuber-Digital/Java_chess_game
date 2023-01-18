@@ -9,21 +9,19 @@ import com.chess.piece.PieceFactory;
 
 import java.util.*;
 
-public class Board {
+public final class Board {
     private static final int BOARD_LENGTH = 8;
     // Location contains the coordinates
     // Square contains the info if is occupied or not
     public final Map<Location, Square> locationSquareMap = new HashMap<>();
-
-    // boardSquares is for assigning colors to each square for later graphical
-    // dispay:
-    Square[][] boardSquares = new Square[8][8];
-
     // separate pieces lists
     private final List<AbstractPiece> lightPieces = new ArrayList<>();
     private final List<AbstractPiece> darkPieces = new ArrayList<>();
     public AbstractPiece lightKing;
     public AbstractPiece darkKing;
+    // boardSquares is for assigning colors to each square for later graphical
+    // dispay:
+    private static final Square[][] boardSquares = new Square[8][8];
 
     public Board() {
         // map zipping together the squares and location coordinates
@@ -70,6 +68,11 @@ public class Board {
 
     public Map<Location, Square> getLocationSquareMap() {
         return locationSquareMap;
+    }
+
+    // tiles are the graphical representation of the squares
+    public static Square getSquareFromTileId(int tileId){
+        return boardSquares[tileId / 8][tileId % 8];
     }
 
     // helper methods
