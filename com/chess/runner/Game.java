@@ -32,158 +32,96 @@ public class Game{
     private static GameMode gameMode;
     private static boolean processingMove = false;
 
-    public static void main(String[] args){
+    private static File fromFile, toFile;
+    private static int fromRank, toRank;
 
+    public static void main(String[] args){
 
         System.out.println("+ + +   GREEN-Chess by Matthias Huber   + + +");
         System.out.println("partially based on the YT-tutorials of Gerard Taylor (https://www.youtube.com/watch?v=xaJxBsxqkyM)");
         System.out.println("partially based on the YT-tutorials of amir650 (https://github.com/amir650/BlackWidow-Chess).");
-        
-        while (true){
-            System.out.println("\nMode: Manual (M) or Auto (A)?");
-            String inputManualOrAutoPlay = input_scan.nextLine();
-            if (validGameModeChoiceInput(inputManualOrAutoPlay)){
-                if (inputManualOrAutoPlay.equalsIgnoreCase("a")){
-                    gameMode = GameMode.AUTO;
-                    gameDetails.splitAutoGameStringInMoves();
-                }
-                else{
-                    gameMode = GameMode.MANUAL;
-                }
-                break;
-            }
-            else{
-                System.out.println("Invalid input. Please enter m/M or a/A.");
-            }
-        }
-
 
         Table table = new Table(board);
 
-        try {
-            
-            while(!isCheckMate){
-                
-                //System.out.println("\n");
-                if (isCheck){
-                    //System.out.println(String.format("%s player - your king is in check.", turnOfColor));
-                    //System.out.println(String.format("%s player - enter move:", turnOfColor));
-                    //String moveLine;
-                    if (gameMode == GameMode.MANUAL){
-                        //moveLine = input_scan.nextLine();
-                    }
-                    else{
-                        moveLine = gameDetails.getAutoMove();
-                        System.out.println("...auto-player: " + moveLine);
-                    }
+    }
+
+    public static void setUserMoveCoordsFromMouse(Square fromSquare, Square toSquare){
+        // Receives the mouse-click based move coordinates and saves them to the corresponding ranks and files.
+
+        fromFile = fromSquare.getLocation().getFile();
+        fromRank = fromSquare.getLocation().getRank();
+
+        toFile = toSquare.getLocation().getFile();
+        toRank = toSquare.getLocation().getRank();
+    }
+
+    private static void checkBasedTurnHandling(){
+
+        if (isCheckResolvingMove(fromFile, toFile, fromRank, toRank)){
                     
-                    if (inputCoordinatesInChessboard(moveLine) && moveLine.length() == 4){
-                        String fromLoc = moveLine.substring(0,2);
-                        String toLoc = moveLine.substring(2,4);
-            
-                        // we need the enum FILE from an integer value, that fom the string conversion of a character 
-                        // that character is cast to upper case. 
-                        // the character is the first character of the "origin"
-                        File fromFile = File.valueOf(String.valueOf(Character.toUpperCase(fromLoc.charAt(0))));
-                        int fromRank = Integer.parseInt(String.valueOf(fromLoc.charAt(1)));
-                        
-                        // we proceed similarly for the destination:
-                        File toFile = File.valueOf(String.valueOf(Character.toUpperCase(toLoc.charAt(0))));
-                        int toRank = Integer.parseInt(String.valueOf(toLoc.charAt(1)));
-                        
-                        Square fromSquare = board.getLocationSquareMap().get(new Location(fromFile, fromRank));
-                        Square toSquare = board.getLocationSquareMap().get(new Location(toFile, toRank));
+            try{
+                movePieceIfPermitted(fromFile, toFile, fromRank, toRank, board);
 
+                // switching the player happens here in order to evaluate check and checkmate BEFORE the turn of the player
+                turnOfColor = turnOfColor.next();
+                checkForCheckedKing(board);
 
-                        if (isCheckResolvingMove(fromFile, toFile, fromRank, toRank)){
-                            try{
-                                movePieceIfPermitted(fromFile, toFile, fromRank, toRank, board);
-
-                                // switching the player happens here in order to evaluate check and checkmate BEFORE the turn of the player
-                                turnOfColor = turnOfColor.next();
-                                checkForCheckedKing(board);
-
-                                if(isCheck){
-                                    checkForCheckmate();
-                                    if (checkResolvingMoves.isEmpty()){
-                                        isCheckMate = true;
-                                        matchWinner = turnOfColor.next();
-                                        break;
-                                    }
-                                }
-                            }
-                            catch (InvalidMoveException i){
-                                System.out.println(i);
-                            }
-                        } 
-                        else{
-                            System.out.println("The move you entered does not resolve the check. Please try again.");
-                        }
-                    }
-                    else{
-                        System.out.println("Invalid input characters or coordinates not in chess board. Please try again.");
+                if(isCheck){
+                    checkForCheckmate();
+                    if (checkResolvingMoves.isEmpty()){
+                        isCheckMate = true;
+                        matchWinner = turnOfColor.next();
                     }
                 }
-                else{
-                    
-                    System.out.println(String.format("%s player - enter move:", turnOfColor));
-                    String moveLine;
-                    if (gameMode == GameMode.MANUAL){
-                        moveLine = input_scan.nextLine();
-                    }
-                    else{
-                        moveLine = gameDetails.getAutoMove();
-                        System.out.println("...auto-player: " + moveLine);
-                    }
-
-                    if (inputCoordinatesInChessboard(moveLine) && moveLine.length() == 4){
-                        String fromLoc = moveLine.substring(0,2);
-                        String toLoc = moveLine.substring(2,4);
-            
-                        // we need the enum FILE from an integer value, that fom the string conversion of a character 
-                        // that character is cast to upper case. 
-                        // the character is the first character of the "origin"
-                        File fromFile = File.valueOf(String.valueOf(Character.toUpperCase(fromLoc.charAt(0))));
-                        int fromRank = Integer.parseInt(String.valueOf(fromLoc.charAt(1)));
-                        
-                        // we proceed similarly for the destination:
-                        File toFile = File.valueOf(String.valueOf(Character.toUpperCase(toLoc.charAt(0))));
-                        int toRank = Integer.parseInt(String.valueOf(toLoc.charAt(1)));
-
-                        try{
-                            movePieceIfPermitted(fromFile, toFile, fromRank, toRank, board);
-                            
-                            // switching the player happens here in order to evaluate check and checkmate BEFORE the turn of the player
-                            turnOfColor = turnOfColor.next();
-                            checkForCheckedKing(board);
-    
-                            if(isCheck){
-                                checkForCheckmate();
-                                if (checkResolvingMoves.isEmpty()){
-                                    isCheckMate = true;
-                                    matchWinner = turnOfColor.next();
-                                    break;
-                                }
-                            }
-                        }
-                        catch (InvalidMoveException i){
-                            System.out.println(i);
-                        }
-                    }
-                    else{
-                        System.out.println("Invalid input characters or coordinates not in chess board. Please try again.");
-                    }
-                }
-                
-
             }
-            System.out.println(String.format("CHECKMATE: The %s player won the match.", matchWinner));
+            catch (InvalidMoveException i){
+                System.out.println(i);
+            }
 
+        } 
+        else{
+            System.out.println("The move you entered does not resolve the check. Please try again.");
+        }
+
+    }
+
+    private static void normalTurnHandling(){
+        try{
+            movePieceIfPermitted(fromFile, toFile, fromRank, toRank, board);
+                        
+            // switching the player happens here in order to evaluate check and checkmate BEFORE the turn of the player
+            turnOfColor = turnOfColor.next();
+            checkForCheckedKing(board);
+
+            if(isCheck){
+                checkForCheckmate();
+                if (checkResolvingMoves.isEmpty()){
+                    isCheckMate = true;
+                    matchWinner = turnOfColor.next();
+                }
+            }
+        }
+        catch (InvalidMoveException i){
+            System.out.println(i);
+        }
+    }
+
+    public static void gameTurnHandling(){
+        try {
+            if (isCheck){
+                checkBasedTurnHandling();
+            }
+            else{
+                normalTurnHandling();
+            }
         } catch (UnsupportedOperationException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
+        
+        if (isCheckMate){
+            System.out.println(String.format("CHECKMATE: The %s player won the match.", matchWinner));
+        }
     }
 
     private static void runCommandLineGame_obsolete(){
@@ -316,6 +254,7 @@ public class Game{
         }
 
     }
+
 
     private static void movePieceIfPermitted (File fromFile, File toFile, int fromRank, int toRank, Board board) 
                                             throws InvalidMoveException{

@@ -35,8 +35,9 @@ public class Table {
     private final BoardPanel boardPanel; // visual component for the board
     private final Board chessboard;
 
-    private Square sourceSquare;
-    private Square destinationSquare;
+    private static Square sourceSquare;
+    private static Square destinationSquare;
+    private static TilePanel sourceTile;
     private AbstractPiece humanMovedPiece;
 
     private static final Dimension OUTER_FRAME_DIMENSION = new Dimension(600,600);
@@ -45,7 +46,7 @@ public class Table {
     private static final int NUM_TILES = 64;
     private static final String PIECE_IMAGES_PATH = new java.io.File("").getAbsolutePath() + "\\com\\chess\\gui\\img\\";
     // sand-color:
-    //private static final Color LIGHT_TILE_COLOR = new Color(240,230,140);
+    private static final Color ACTIVE_TILE_COLOR = new Color(240,230,140);
     // white:
     private static final Color LIGHT_TILE_COLOR = new Color(255,255,255);
     //Color darkColor = new Color(210,105,30);
@@ -138,6 +139,7 @@ public class Table {
     private class TilePanel extends JPanel implements MouseListener{
         // This is the cell/tile graphical area
         private final int tileId;
+        private Color inactiveTileColor;
 
         TilePanel (final BoardPanel boardPanel, final int tileId){
             super(new GridBagLayout());
@@ -152,7 +154,7 @@ public class Table {
         
         @Override
         public void mouseClicked(MouseEvent e){
-
+            System.out.println("Mouse clicked");
             // only kick-off the code in case there is no move currently being processed by the backend.
             if (!Game.getProcessingMove()){
 
@@ -163,25 +165,43 @@ public class Table {
                 else if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
                     // on right-click, ANY PIECE SELECTIONS ARE CANCELLED.
                     if (sourceSquare == null){
+
+                        System.out.println("Mouse SOURCE square initially NULL");
                         // in the past, no square has been selected
+                        sourceTile = this;
                         sourceSquare = chessboard.getSquareFromTileId(tileId);
+                        System.out.println("Mouse SOURCE changed: " + sourceSquare.getLocation().getFile().toString() + sourceSquare.getLocation().getRank().toString());
                         humanMovedPiece = sourceSquare.getCurrentPiece();
-                        if (humanMovedPiece == null || humanMovedPiece.getPieceColor().equals(Game.getTurnColor())){
+                        //if (humanMovedPiece == null || humanMovedPiece.getPieceColor().equals(Game.getTurnColor())){
+                        if (humanMovedPiece == null){
                             // in case there is no piece on the current square
                             sourceSquare = null;
+                            sourceTile = null;
+                            System.out.println("Resetting source square!!!");
+                        }
+                        else{
+                            //setActiveTileColor();
+                            System.out.println("Source piece: " + sourceSquare.getCurrentPiece().getName());    
                         }
                     }
                     else{
+                        System.out.println("Mouse DESTINATION");
                         // once a source square has been already selected
                         destinationSquare = chessboard.getSquareFromTileId(tileId);
-                        // MAKE THE MOVE HERE
-
-                        // UPDATE chessboard
+                        System.out.println("Mouse source square: " + sourceSquare.getLocation().getFile() + sourceSquare.getLocation().getRank().toString());
+                        System.out.println("Mouse DESTINATION square: " + destinationSquare.getLocation().getFile() + destinationSquare.getLocation().getRank().toString());
                         if (!Game.getProcessingMove()){
-                            // screen update
+                            // MAKE THE MOVE HERE
+                            Game.setUserMoveCoordsFromMouse(sourceSquare, destinationSquare);
+                            Game.gameTurnHandling();
+                            // UPDATE chessboard
+                            boardPanel.drawBoard(chessboard);
                         }
                         // clear mouse listener fields
                         clearMouseListenerFields();
+                        //setInactiveTileColor();
+                        //System.out.println("Source/destination after clearing: " + sourceSquare.getLocation().getFile().toString() + sourceSquare.getLocation().getRank().toString() + "->" + 
+                        //                    destinationSquare.getLocation().getFile().toString() + destinationSquare.getLocation().getRank().toString());
                     }
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
@@ -200,7 +220,6 @@ public class Table {
 
         @Override
         public void mouseReleased(MouseEvent e){
-            
         }
 
         @Override
@@ -218,6 +237,7 @@ public class Table {
             sourceSquare = null;
             destinationSquare = null;
             humanMovedPiece = null;
+            sourceTile = null;
         }
 
         public void drawTile(final Board board){
@@ -244,16 +264,29 @@ public class Table {
         }
 
         private void assignTileColor(){
-
-            if ((tileId>=8) && (tileId<=15) ||
-                (tileId>=24) && (tileId<=31) ||
-                (tileId>=40) && (tileId<=47) ||
-                (tileId>=56) && (tileId<=63)
-            ){
-                setBackground(this.tileId % 2 == 0 ? LIGHT_TILE_COLOR : DARK_TILE_COLOR);
-            } else {
-                setBackground(this.tileId % 2 != 0 ? LIGHT_TILE_COLOR : DARK_TILE_COLOR);
+            if (this.equals(sourceTile)){
+                setActiveTileColor();
             }
+            else{
+                if ((tileId>=8) && (tileId<=15) ||
+                    (tileId>=24) && (tileId<=31) ||
+                    (tileId>=40) && (tileId<=47) ||
+                    (tileId>=56) && (tileId<=63)
+                ){
+                    setBackground(this.tileId % 2 == 0 ? DARK_TILE_COLOR : LIGHT_TILE_COLOR);
+                } else {
+                    setBackground(this.tileId % 2 != 0 ? DARK_TILE_COLOR : LIGHT_TILE_COLOR);
+                }
+                this.inactiveTileColor = this.getBackground();
+            }
+        }
+
+        private void setActiveTileColor(){
+            sourceTile.setBackground(ACTIVE_TILE_COLOR);
+        }
+
+        private void setInactiveTileColor(){
+            sourceTile.setBackground(sourceTile.inactiveTileColor);
         }
     }
 }
