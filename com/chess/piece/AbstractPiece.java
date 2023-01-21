@@ -14,11 +14,19 @@ public abstract class AbstractPiece implements Movable{
     protected PieceColor pieceColor;
     protected Square currentSquare;
     protected Square previousSquare;
-    protected static AbstractPiece capturedSimulationPiece = null;
+    private Location initialBoardLocation;
+    protected AbstractPiece capturedSimulationPiece = null;
     public boolean pieceHasBeenCaptured = false;
 
-    public AbstractPiece(PieceColor pieceColor){
+    public AbstractPiece(PieceColor pieceColor, final Location initialBoardLocation){
         this.pieceColor = pieceColor;
+        this.initialBoardLocation = initialBoardLocation;
+    }
+
+    public void resetToInitialState(Board board){
+        this.currentSquare = board.getLocationSquareMap().get(this.initialBoardLocation);
+        this.pieceHasBeenCaptured = false;
+        this.previousSquare = null;
     }
 
     public PieceColor getPieceColor(){

@@ -15,8 +15,8 @@ public class Bishop extends AbstractPiece{
         {1, -1},
     };
 
-    public Bishop(PieceColor pieceColor){
-        super(pieceColor);
+    public Bishop(PieceColor pieceColor, Location initialBoardLocation){
+        super(pieceColor, initialBoardLocation);
         this.name = "Bishop";
     }
     /* 

@@ -40,8 +40,8 @@ public class Table {
     private static TilePanel sourceTile;
     private AbstractPiece humanMovedPiece;
 
-    private static final Dimension OUTER_FRAME_DIMENSION = new Dimension(600,600);
-    private static final Dimension BOARD_PANEL_DIMENSION = new Dimension(400,350);
+    private static final Dimension OUTER_FRAME_DIMENSION = new Dimension(800,800); // REAL size of outside window - checkerboard adapts
+    private static final Dimension BOARD_PANEL_DIMENSION = new Dimension(400,350); // PREFERRED size of checkerboard
     private static final Dimension TILE_PANEL_DIMENSION = new Dimension(10,10);
     private static final int NUM_TILES = 64;
     private static final String PIECE_IMAGES_PATH = new java.io.File("").getAbsolutePath() + "\\com\\chess\\gui\\img\\";
@@ -82,15 +82,29 @@ public class Table {
         // PGN format is a standard format
         // This creates a menu entry:
         final JMenuItem openPGN = new JMenuItem("Load PGN file");
-        // Listener waits for your click and triggers the ActionEvent subsequently
+
+
+        /* // Listener waits for your click and triggers the ActionEvent subsequently
         openPGN.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e){
                 System.out.println("open PGN file");
             }
         });
-        fileMenu.add(openPGN);
+        fileMenu.add(openPGN); */
 
+        // Start a new game and throw away the current one
+        final JMenuItem newGameItem = new JMenuItem("New game");
+        newGameItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e){
+                System.out.println("Starting new game...");
+                chessboard.resetBoard();
+            }
+        });
+        fileMenu.add(newGameItem);
+
+        // Exit the chess application
         final JMenuItem exitMenuItem = new JMenuItem("Exit");
         exitMenuItem.addActionListener(new ActionListener() {
             @Override
@@ -104,9 +118,8 @@ public class Table {
         return fileMenu;
     }
 
-
     private class BoardPanel extends JPanel{
-        // This is the board graphical area
+        // This is the real checkerboard area
 
         final List<TilePanel> boardTiles;
 
@@ -120,7 +133,7 @@ public class Table {
                 add(tilePanel);
             }
 
-            setPreferredSize(BOARD_PANEL_DIMENSION);
+            setSize(BOARD_PANEL_DIMENSION);
             validate();
         }
     

@@ -18,8 +18,8 @@ public class Queen extends AbstractPiece{
         {1, -1},
     };
 
-    public Queen(PieceColor pieceColor){
-        super(pieceColor);
+    public Queen(PieceColor pieceColor, Location initialBoardLocation){
+        super(pieceColor, initialBoardLocation);
         this.name = "Queen";
     }
 

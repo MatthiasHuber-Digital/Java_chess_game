@@ -14,6 +14,7 @@ public final class Board {
     // Location contains the coordinates
     // Square contains the info if is occupied or not
     public final Map<Location, Square> locationSquareMap = new HashMap<>();
+    private final Map<Location, AbstractPiece> intialPieceLocationMap = PieceFactory.getPieces(); // Mapping of pieces to their INITIAL locations:
     // separate pieces lists
     private final List<AbstractPiece> lightPieces = new ArrayList<>();
     private final List<AbstractPiece> darkPieces = new ArrayList<>();
@@ -25,10 +26,6 @@ public final class Board {
 
     public Board() {
         // map zipping together the squares and location coordinates
-        //locationSquareMap = new HashMap<>();
-
-        // Mapping of pieces to their locations:
-        Map<Location, AbstractPiece> pieces = PieceFactory.getPieces();
 
         for (int i = 0; i < boardSquares.length; i++) {
             int column = 0;
@@ -38,9 +35,9 @@ public final class Board {
                 // generate the square object
                 Square newSquare = new Square(currentColor, new Location(file, BOARD_LENGTH - i));
                 // if there is a piece that has a link to the square's location -
-                if (pieces.containsKey(newSquare.getLocation())) {
+                if (intialPieceLocationMap.containsKey(newSquare.getLocation())) {
                     // Creating a reference to the piece of the current location
-                    AbstractPiece piece = pieces.get(newSquare.getLocation());
+                    AbstractPiece piece = intialPieceLocationMap.get(newSquare.getLocation());
                     // Assign the piece to the square
                     newSquare.setCurrentPiece(piece);
                     newSquare.setIsOccupied(true);
@@ -62,6 +59,33 @@ public final class Board {
                 locationSquareMap.put(newSquare.getLocation(), newSquare);
                 currentColor = (currentColor == SquareColor.LIGHT) ? SquareColor.DARK : SquareColor.LIGHT;
                 column++;
+            }
+        }
+    }
+
+    public void resetBoard(){
+        // This method resets the board, all pieces and all squares to their INITIAL STATES:
+        
+        // Resetting pieces:
+        for (AbstractPiece piece : lightPieces){
+            piece.resetToInitialState(this);
+        }
+        for (AbstractPiece piece : darkPieces){
+            piece.resetToInitialState(this);
+        }
+
+        // Resetting squares:
+        Square currentSquare;
+        for (int i=0; i < 8; i++) {
+            for (int j=0; j < 8; j++){
+                currentSquare = boardSquares[i][j];
+                if (intialPieceLocationMap.containsKey(currentSquare.getLocation())){
+                    currentSquare.setCurrentPiece(intialPieceLocationMap.get(currentSquare.getLocation()));
+                    currentSquare.setIsOccupied(true);
+                }
+                else{
+                    currentSquare.reset();
+                }
             }
         }
     }

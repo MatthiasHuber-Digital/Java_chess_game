@@ -7,8 +7,8 @@ import com.chess.common.*;
 
 public class Knight extends AbstractPiece{
     
-    public Knight(PieceColor pieceColor){
-        super(pieceColor);
+    public Knight(PieceColor pieceColor, Location initialBoardLocation){
+        super(pieceColor, initialBoardLocation);
         this.name = "Knight";
     }
 

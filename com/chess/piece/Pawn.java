@@ -9,8 +9,8 @@ public class Pawn extends AbstractPiece{
     private int rankDirectionMultiplier;
     private boolean isFirstMove = true;
 
-    public Pawn(PieceColor pieceColor){
-        super(pieceColor);
+    public Pawn(PieceColor pieceColor, Location initialBoardLocation){
+        super(pieceColor, initialBoardLocation);
         this.name = "Pawn";
         if (this.pieceColor.equals(PieceColor.LIGHT)){
             rankDirectionMultiplier = 1;

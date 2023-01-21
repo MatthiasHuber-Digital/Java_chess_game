@@ -14,8 +14,8 @@ public class Rook extends AbstractPiece{
         {0, -1},
     };
 
-    public Rook(PieceColor pieceColor){
-        super(pieceColor);
+    public Rook(PieceColor pieceColor, Location initialBoardLocation){
+        super(pieceColor, initialBoardLocation);
         this.name = "Rook";
     }
 
